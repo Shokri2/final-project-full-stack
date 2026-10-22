@@ -10,6 +10,7 @@ import { apiLimiter } from "../middleware/rateLimit.Middleware.js";
 import { validate } from "../middleware/validate.Middleware.js";
 import { protect } from "../middleware/protect.Middleware.js";
 import express from "express";
+
 import { categorySchema } from "../validation/category.Validation.js";
 
 const router = express.Router();

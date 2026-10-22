@@ -1,14 +1,15 @@
-import { pool } from "../config/db.js";
+﻿import { pool } from "../config/db.js";
 
 export const getAllUsers = async () => {
   const result = await pool.query(`
-    SELECT 
+    SELECT
       id,
       fname,
       lname,
       email,
       hashed_password,
       role,
+      status,
       created_at,
       avatar,
       updated_at
@@ -20,9 +21,18 @@ export const getAllUsers = async () => {
 
 export const getUserById = async (id) => {
   const result = await pool.query(
-    `select id, fname, lname, email, role, created_at, avatar, updated_at
-         from users
-         where id = $1`,
+    `SELECT
+       id,
+       fname,
+       lname,
+       email,
+       role,
+       status,
+       created_at,
+       avatar,
+       updated_at
+     FROM users
+     WHERE id = $1`,
     [id],
   );
 
@@ -31,9 +41,9 @@ export const getUserById = async (id) => {
 
 export const deletUserById = async (id) => {
   const result = await pool.query(
-    `delete from users
-         where id = $1
-         returning *`,
+    `DELETE FROM users
+     WHERE id = $1
+     RETURNING *`,
     [id],
   );
 
@@ -46,18 +56,33 @@ export const updateUser = async ({
   lname,
   email,
   avatar,
+
   updated_at,
 }) => {
   const result = await pool.query(
-    `update users
-         set fname=$1,
-             lname=$2,
-             email=$3,
-             avatar=$4,
-             updated_at=$5
-         where id = $6
-         returning *`,
-    [fname, lname, email, avatar, updated_at, id],
+    `UPDATE users
+     SET fname = $1,
+         lname = $2,
+         email = $3,
+         avatar = $4,
+
+         updated_at = $5
+     WHERE id = $6
+     RETURNING *`,
+    [fname, lname, email, avatar,  updated_at, id],
+  );
+
+  return result.rows[0];
+};
+// --------------status------------
+export const updateUserStatus = async (id, status) => {
+  const result = await pool.query(
+    `UPDATE users
+     SET status = $1,
+         updated_at = CURRENT_TIMESTAMP
+     WHERE id = $2
+     RETURNING id, fname, lname, email, role, status, created_at, avatar, updated_at`,
+    [status, id],
   );
 
   return result.rows[0];

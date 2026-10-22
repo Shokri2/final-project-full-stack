@@ -1,5 +1,5 @@
-
----------------table1 
+﻿
+---------------table1
 create table user(
 id,fname,lname, email, role, createdat, updatedat, hashed_password, avatar
 )
@@ -33,3 +33,19 @@ CREATE TABLE products (
     status TEXT NOT NULL DEFAULT 'pending',
     CONSTRAINT status_check CHECK (status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text]))
 );
+
+-- task---
+create table user(
+    id,
+    fname,
+    lname,
+    email,
+    role,
+    createdat,
+    updatedat,
+    hashed_password,
+    avatar,
+    phone number,
+    status text NOT NULL DEFAULT 'pending'::text,
+    CONSTRAINT sttaus_check CHECK (status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text]))
+)
