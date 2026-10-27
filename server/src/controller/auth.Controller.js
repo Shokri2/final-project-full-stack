@@ -1,98 +1,145 @@
 import { createUser, findUserByEmail } from "../model/auth.Model.js";
+
 import bcrypt from "bcrypt";
+
 import { generateAcessTokens, generateRefreshTokens } from "../utils/token.js";
-// -------------------register-----------------
+
+// ------------------- Register -------------------
 export const createUserController = async (req, res) => {
   try {
-    const { fname, lname, email, password, role, avatar } = req.body;
-    const isExist = await findUserByEmail({ email });
-    if (isExist.length !== 0) {
-      return res.status(400).json({ message: "email already exist!" });
+    const { name, email, password, avatar } = req.body;
+
+    if (
+      !name?.trim() ||
+      !email?.trim() ||
+      typeof password !== "string" ||
+      !password
+    ) {
+      return res.status(400).json({
+        message: "Name, email, and password are required.",
+      });
     }
-    const hashed_password = await bcrypt.hash(password, 12);
-    const newUser = await createUser({
-      fname,
-      lname,
-      email,
-      hashed_password,
-      role,
-      avatar,
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedName = name.trim();
+
+    const isExist = await findUserByEmail({
+      email: normalizedEmail,
     });
-    if (!newUser) {
-      return res.status(400).json({ message: "Something went wrong!" });
+
+    if (isExist.length !== 0) {
+      return res.status(409).json({
+        message: "Email already exists.",
+      });
     }
-    return res
-      .status(201)
-      .json({ message: "account created successfully", user: newUser });
+
+    const hashed_password = await bcrypt.hash(password, 12);
+
+    // Public registration always creates a regular user.
+    // Never trust a role sent by the frontend.
+    const newUser = await createUser({
+      name: normalizedName,
+      email: normalizedEmail,
+      hashed_password,
+      role: "user",
+      avatar: avatar || null,
+    });
+
+    if (!newUser) {
+      return res.status(500).json({
+        message: "Something went wrong while creating the account.",
+      });
+    }
+
+    // Never expose the password hash in the response.
+    const {
+      hashed_password: _passwordHash,
+      password: _password,
+      ...safeUser
+    } = newUser;
+
+    return res.status(201).json({
+      message: "Account created successfully.",
+      user: safeUser,
+    });
   } catch (error) {
-    console.log("REGISTER ERROR:", error);
-    return res.status(500).json({ message: "internal server error" });
+    console.error("REGISTER ERROR:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
   }
 };
 
-// --------------------------login----------------
-
+// -------------------------- Login ----------------
 export const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const isExist = await findUserByEmail({ email });
+
+    if (
+      typeof email !== "string" ||
+      typeof password !== "string" ||
+      !email.trim() ||
+      !password
+    ) {
+      return res.status(400).json({
+        message: "Email and password are required.",
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const isExist = await findUserByEmail({
+      email: normalizedEmail,
+    });
+
     if (isExist.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "You don`t have an account, plesae register" });
+      return res.status(401).json({
+        message: "Invalid email or password.",
+      });
     }
-    const isMatch = await bcrypt.compare(password, isExist[0].hashed_password);
+
+    const userRecord = isExist[0];
+
+    const isMatch = await bcrypt.compare(password, userRecord.hashed_password);
+
     if (!isMatch) {
-      return res.status(400).json({ message: "password is not correct!" });
+      return res.status(401).json({
+        message: "Invalid email or password.",
+      });
     }
-    const accessTokens = generateAcessTokens(isExist[0]);
-    const refreshTokens = generateRefreshTokens(isExist[0]);
+
+    const accessTokens = generateAcessTokens(userRecord);
+    const refreshTokens = generateRefreshTokens(userRecord);
 
     res.cookie("refreshTokens", refreshTokens, {
-      httpsOnly: true,
-      secure: process.send.NODE_ENV === "production",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       path: "/api/auth",
     });
+
     const safeUser = {
-      id: isExist[0].id,
-      fname: isExist[0].fname,
-      lname: isExist[0].lname,
-      role: isExist[0].role,
-      avatar: isExist[0].avatar,
-      email: isExist[0].email,
+      id: userRecord.id,
+      fname: userRecord.fname,
+      lname: userRecord.lname,
+      role: userRecord.role,
+      status: userRecord.status,
+      avatar: userRecord.avatar,
+      email: userRecord.email,
     };
-    return res
-      .status(200)
-      .json({ message: "login successfully", user: safeUser, accessTokens });
-  } catch (error) {
-    console.log("LOGIN ERROR:", error);
-    return res.status(500).json({ message: "internal server error" });
-  }
-};
 
-// -----------------------------refreshController---------------------------
-export const refreshController = async (req, res) => {
-  try {
-    const refreshTokens = req.cookie.refreshTokens;
-    if (!refreshTokens) {
-      return res.status(401).json({ message: "refreshTokens missing!" });
-    }
-    const payload = jwt.verify(token, process.env.REFRESH_JWT_SECRET, {
-      issuer: "my-api",
-      audience: "my-client",
+    return res.status(200).json({
+      message: "Login successful.",
+      user: safeUser,
+      accessTokens,
     });
-
-    if (payload.type !== "refresh") {
-      return res.status(401).json({ message: "invalid tokens type!" });
-    }
-
-    const accessTokens = generateAcessTokens(payload);
-
-    return res.status(200).json({ accessTokens });
   } catch (error) {
-    console.log("error", error);
-    return res.status(500).json({ message: "internal server error" });
+    console.error("LOGIN ERROR:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
   }
 };

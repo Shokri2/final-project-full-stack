@@ -1,4 +1,3 @@
-
 import {
   AppBar,
   Toolbar,
@@ -11,15 +10,23 @@ import {
 
 import { NavLink, Link } from "react-router-dom";
 import ArrowOutwardIcon from "@mui/icons-material/ArrowOutward";
+import { useAuth } from "../../Hooks/useAuth";
 
 const pages = [
   { title: "Home", path: "/" },
   { title: "About", path: "/about" },
   { title: "Dashboard", path: "/services" },
-  { title: "Crop Guide", path: "/contact" },
+
+  { title: "Crop Guide", path: "/crop-guide" },
 ];
 
 function Header() {
+  const { currentUser, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+  };
+
   return (
     <AppBar
       position="absolute"
@@ -44,6 +51,7 @@ function Header() {
             gap: 2,
           }}
         >
+          {/* Logo */}
           <Box
             component={Link}
             to="/"
@@ -95,6 +103,7 @@ function Header() {
             </Box>
           </Box>
 
+          {/* Navigation Links */}
           <Stack
             direction="row"
             spacing={0.5}
@@ -119,12 +128,10 @@ function Header() {
                   py: 1.1,
                   borderRadius: 50,
                   whiteSpace: "nowrap",
-
                   "&.active": {
                     bgcolor: "rgba(255,255,255,0.16)",
                     color: "#D9F36A",
                   },
-
                   "&:hover": {
                     color: "#D9F36A",
                     bgcolor: "rgba(255,255,255,0.08)",
@@ -136,44 +143,64 @@ function Header() {
             ))}
           </Stack>
 
-          {/* Login and Register */}
+          {/* Authentication Buttons */}
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <Button
-              component={Link}
-              to="/login"
-              sx={{
-                color: "#fff",
-                textTransform: "none",
-                fontWeight: 700,
-                "&:hover": { color: "#D9F36A" },
-              }}
-            >
-              Login
-            </Button>
+            {currentUser ? (
+              <Button
+                onClick={handleLogout}
+                sx={{
+                  color: "#fff",
+                  textTransform: "none",
+                  fontWeight: 700,
+                  "&:hover": {
+                    color: "#D9F36A",
+                  },
+                }}
+              >
+                Logout
+              </Button>
+            ) : (
+              <>
+                <Button
+                  component={Link}
+                  to="/login"
+                  sx={{
+                    color: "#fff",
+                    textTransform: "none",
+                    fontWeight: 700,
+                    "&:hover": {
+                      color: "#D9F36A",
+                    },
+                  }}
+                >
+                  Login
+                </Button>
 
-            <Button
-              component={Link}
-              to="/register"
-              variant="contained"
-              endIcon={<ArrowOutwardIcon />}
-              sx={{
-                bgcolor: "#D9F36A",
-                color: "#172514",
-                borderRadius: 50,
-                px: 2.2,
-                py: 1.2,
-                fontWeight: 800,
-                textTransform: "none",
-                whiteSpace: "nowrap",
-                boxShadow: "none",
-                "&:hover": {
-                  bgcolor: "#E8FF91",
-                  boxShadow: "none",
-                },
-              }}
-            >
-              Register
-            </Button>
+                <Button
+                  component={Link}
+                  to="/register"
+                  variant="contained"
+                  endIcon={<ArrowOutwardIcon />}
+                  sx={{
+                    bgcolor: "#D9F36A",
+                    color: "#172514",
+                    borderRadius: 50,
+                    px: 2.2,
+                    py: 1.2,
+                    fontWeight: 800,
+                    textTransform: "none",
+                    whiteSpace: "nowrap",
+                    boxShadow: "none",
+                    "&:hover": {
+                      bgcolor: "#E8FF91",
+                      boxShadow: "none",
+                    },
+                  }}
+                >
+                  Register
+                </Button>
+              </>
+            )}
           </Stack>
         </Toolbar>
       </Container>
@@ -182,4 +209,3 @@ function Header() {
 }
 
 export default Header;
-

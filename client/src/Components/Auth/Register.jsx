@@ -6,10 +6,12 @@ import {
   TextField,
   Button,
   Stack,
+  Alert,
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import SpaOutlinedIcon from "@mui/icons-material/SpaOutlined";
+import { useAuth } from "../../Hooks/useAuth";
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -19,23 +21,75 @@ function Register() {
     confirmPassword: "",
   });
 
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const { register } = useAuth();
+
   const handleChange = (event) => {
-    setFormData({
-      ...formData,
-      [event.target.name]: event.target.value,
-    });
+    const { name, value } = event.target;
+
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+
+    setErrorMessage("");
+    setSuccessMessage("");
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
+    setErrorMessage("");
+    setSuccessMessage("");
+
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match.");
+      setErrorMessage("Passwords do not match.");
       return;
     }
 
-    // سنربط إنشاء الحساب بالـ Backend لاحقًا
-    console.log("Registration form:", formData);
+    if (formData.password.length < 8 || formData.password.length > 100) {
+      setErrorMessage("Password must be between 8 and 100 characters.");
+      return;
+    }
+
+    const userData = {
+      name: formData.name.trim(),
+      email: formData.email.trim().toLowerCase(),
+      password: formData.password,
+      confirmPassword: formData.confirmPassword,
+      role: "user",
+    };
+
+    setLoading(true);
+
+    try {
+      console.log("Sending registration request...");
+
+      const result = await register(userData);
+
+      console.log("Registration result:", result);
+
+      setSuccessMessage("Registration request completed successfully.");
+    } catch (error) {
+      console.error("Registration failed:", error);
+
+      const serverErrors = error?.response?.data?.error;
+
+      if (Array.isArray(serverErrors) && serverErrors.length > 0) {
+        setErrorMessage(serverErrors.map((item) => item.message).join(" "));
+      } else {
+        setErrorMessage(
+          error?.response?.data?.message ||
+            error?.message ||
+            "Registration failed. Please try again.",
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -77,6 +131,18 @@ function Register() {
             Enter your details to get started.
           </Typography>
 
+          {errorMessage && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {errorMessage}
+            </Alert>
+          )}
+
+          {successMessage && (
+            <Alert severity="success" sx={{ mb: 2 }}>
+              {successMessage}
+            </Alert>
+          )}
+
           <Box component="form" onSubmit={handleSubmit}>
             <Stack spacing={2.5}>
               <TextField
@@ -107,8 +173,11 @@ function Register() {
                 value={formData.password}
                 onChange={handleChange}
                 autoComplete="new-password"
-                inputProps={{ minLength: 8 }}
-                helperText="Use at least 8 characters."
+                inputProps={{
+                  minLength: 8,
+                  maxLength: 100,
+                }}
+                helperText="Use 8–100 characters and meet the server's password requirements."
                 fullWidth
                 required
               />
@@ -120,6 +189,10 @@ function Register() {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 autoComplete="new-password"
+                inputProps={{
+                  minLength: 8,
+                  maxLength: 100,
+                }}
                 fullWidth
                 required
               />
@@ -128,16 +201,23 @@ function Register() {
                 type="submit"
                 variant="contained"
                 size="large"
+                disabled={loading}
                 sx={{
                   py: 1.4,
                   bgcolor: "#246B3D",
                   borderRadius: 2,
                   textTransform: "none",
                   fontWeight: 700,
-                  "&:hover": { bgcolor: "#194D2C" },
+                  "&:hover": {
+                    bgcolor: "#194D2C",
+                  },
+                  "&.Mui-disabled": {
+                    bgcolor: "#A5B9A8",
+                    color: "#fff",
+                  },
                 }}
               >
-                Create Account
+                {loading ? "Creating Account..." : "Create Account"}
               </Button>
             </Stack>
           </Box>
@@ -157,7 +237,13 @@ function Register() {
           </Typography>
 
           <Typography textAlign="center" sx={{ mt: 2 }}>
-            <Link to="/" style={{ color: "#526357", textDecoration: "none" }}>
+            <Link
+              to="/"
+              style={{
+                color: "#526357",
+                textDecoration: "none",
+              }}
+            >
               Back to Home
             </Link>
           </Typography>

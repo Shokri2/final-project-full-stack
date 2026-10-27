@@ -10,10 +10,11 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import SpaOutlinedIcon from "@mui/icons-material/SpaOutlined";
 import { useState } from "react";
+import { useAuth } from "../../Hooks/useAuth";
 
 function Login() {
   const navigate = useNavigate();
-
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -28,7 +29,7 @@ function Login() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-
+    login(formData);
     // سنربط تسجيل الدخول بالـ Backend لاحقًا
     console.log("Login form:", formData);
   };

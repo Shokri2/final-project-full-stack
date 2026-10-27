@@ -6,6 +6,7 @@ import LandingPage from "./Pages/LandingPage/LandingPage.jsx";
 import Home from "./Pages/Home/Home.jsx";
 import About from "./Pages/About/About.jsx";
 import Services from "./Pages/Services/Services.jsx";
+import CropGuide from "./Pages/CropGuide/CropGuide.jsx";
 
 // Authentication
 import Register from "./Components/Auth/Register.jsx";
@@ -31,6 +32,8 @@ function App() {
       <Route path="/about" element={<About />} />
 
       <Route path="/services" element={<Services />} />
+
+      <Route path="/crop-guide" element={<CropGuide />} />
 
       {/* ================= AUTH ================= */}
 

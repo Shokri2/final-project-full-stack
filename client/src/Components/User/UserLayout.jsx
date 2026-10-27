@@ -1,9 +1,11 @@
-
-import { Box, Container, Typography } from "@mui/material";
+import { Box, Container, Typography, Button } from "@mui/material";
 import { NavLink, Outlet } from "react-router-dom";
 import SpaOutlinedIcon from "@mui/icons-material/SpaOutlined";
+import { useAuth } from "../../Hooks/useAuth";
 
 function UserLayout() {
+  const { logout, currentUser } = useAuth();
+
   const linkStyle = ({ isActive }) => ({
     textDecoration: "none",
     color: isActive ? "#246B3D" : "#526357",
@@ -12,6 +14,15 @@ function UserLayout() {
     borderRadius: "8px",
     backgroundColor: isActive ? "#E4F3E5" : "transparent",
   });
+
+  // منع عرض لوحة المستخدم إذا لم يكن مسجّل الدخول
+  if (!currentUser) {
+    return null;
+  }
+
+  const handleLogout = () => {
+    logout();
+  };
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#F7FAF5" }}>
@@ -35,12 +46,20 @@ function UserLayout() {
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <SpaOutlinedIcon sx={{ color: "#246B3D", fontSize: 30 }} />
+
             <Typography variant="h5" fontWeight={800} color="#183D2A">
-              GreenBot
+              AL-HASAD GATE
             </Typography>
           </Box>
 
-          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              flexWrap: "wrap",
+            }}
+          >
             <NavLink to="/user/dashboard" style={linkStyle}>
               Dashboard
             </NavLink>
@@ -52,6 +71,24 @@ function UserLayout() {
             <NavLink to="/" style={linkStyle}>
               View Website
             </NavLink>
+
+            <Button
+              onClick={handleLogout}
+              variant="contained"
+              sx={{
+                bgcolor: "#246B3D",
+                color: "#fff",
+                borderRadius: 2,
+                textTransform: "none",
+                fontWeight: 700,
+                px: 2,
+                "&:hover": {
+                  bgcolor: "#194D2C",
+                },
+              }}
+            >
+              Logout
+            </Button>
           </Box>
         </Container>
       </Box>
@@ -64,4 +101,3 @@ function UserLayout() {
 }
 
 export default UserLayout;
-
