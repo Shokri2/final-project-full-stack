@@ -1,7 +1,6 @@
 ﻿
 import { pool } from "../config/db.js";
 
-// Get all users without exposing password hashes
 export const getAllUsers = async () => {
   const result = await pool.query(`
     SELECT
@@ -20,7 +19,6 @@ export const getAllUsers = async () => {
   return result.rows;
 };
 
-// Get one user without exposing password hash
 export const getUserById = async (id) => {
   const result = await pool.query(
     `SELECT
@@ -41,7 +39,6 @@ export const getUserById = async (id) => {
   return result.rows[0];
 };
 
-// Delete user and return safe fields only
 export const deletUserById = async (id) => {
   const result = await pool.query(
     `DELETE FROM users
@@ -62,7 +59,6 @@ export const deletUserById = async (id) => {
   return result.rows[0];
 };
 
-// Update profile fields only
 export const updateUser = async ({
   id,
   fname,
@@ -95,7 +91,6 @@ export const updateUser = async ({
   return result.rows[0];
 };
 
-// Update user status
 export const updateUserStatus = async (id, status) => {
   const result = await pool.query(
     `UPDATE users

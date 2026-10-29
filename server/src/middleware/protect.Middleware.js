@@ -48,7 +48,6 @@ export const protect = (req, res, next) => {
   }
 };
 
-// Check the user's role
 export const authorizeRoles = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req.user) {

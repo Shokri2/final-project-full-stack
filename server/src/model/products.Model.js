@@ -1,6 +1,6 @@
 import { pool } from "../config/db.js";
 
-// CREATE PRODUCT
+// Create a product
 export const createProduct = async ({
   name,
   description,
@@ -12,36 +12,75 @@ export const createProduct = async ({
   status,
 }) => {
   const result = await pool.query(
-    `insert into products
-    (name, description, price, stock, image, catid, created_by, status)
-    values ($1, $2, $3, $4, $5, $6, $7, $8)
-    returning *`,
-    [name, description, price, stock, image, catid, created_by, status],
+    `INSERT INTO products
+      (name, description, price, stock, image, catid, created_by, status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+     RETURNING *`,
+    [
+      name,
+      description ?? "",
+      price,
+      stock,
+      image ?? "",
+      catid,
+      created_by,
+      status,
+    ],
   );
+
   return result.rows[0];
 };
+
+// Get all approved products for public display
 export const getAllProducts = async () => {
-  const result = await pool.query(`select * from products`);
+  const result = await pool.query(
+    `SELECT *
+     FROM products
+     WHERE status = $1
+     ORDER BY id DESC`,
+    ["approved"],
+  );
 
   return result.rows;
 };
+
+// Get a product by name, case-insensitive
 export const getProductByName = async (name) => {
-  const result = await pool.query(`select * from products where name = $1`, [
-    name,
-  ]);
-  return result.rows;
-};
-export const getProductById = async ({ id }) => {
-  const result = await pool.query(`select * from products where id = $1`, [id]);
-  return result.rows;
-};
-export const deleteProduct = async (id) => {
   const result = await pool.query(
-    `delete from products where id = $1 returning *`,
+    `SELECT *
+     FROM products
+     WHERE LOWER(name) = LOWER($1)`,
+    [name],
+  );
+
+  return result.rows;
+};
+
+// Get a product by ID
+export const getProductById = async ({ id }) => {
+  const result = await pool.query(
+    `SELECT *
+     FROM products
+     WHERE id = $1`,
     [id],
   );
+
   return result.rows;
 };
+
+// Delete a product
+export const deleteProduct = async (id) => {
+  const result = await pool.query(
+    `DELETE FROM products
+     WHERE id = $1
+     RETURNING *`,
+    [id],
+  );
+
+  return result.rows;
+};
+
+// Update a product
 export const updateProduct = async (
   id,
   updated_by,
@@ -54,8 +93,8 @@ export const updateProduct = async (
   status,
 ) => {
   const result = await pool.query(
-    `update products
-     set name = $1,
+    `UPDATE products
+     SET name = $1,
          description = $2,
          price = $3,
          stock = $4,
@@ -64,21 +103,25 @@ export const updateProduct = async (
          updated_by = $7,
          status = $8,
          updated_at = CURRENT_TIMESTAMP
-     where id = $9
-     returning *`,
+     WHERE id = $9
+     RETURNING *`,
     [name, description, price, stock, image, catid, updated_by, status, id],
   );
+
   return result.rows;
 };
+
+// Update product approval status
 export const updateProductStatus = async (id, status, updated_by) => {
   const result = await pool.query(
-    `update products
-     set status = $1,
+    `UPDATE products
+     SET status = $1,
          updated_by = $2,
          updated_at = CURRENT_TIMESTAMP
-     where id = $3
-     returning *`,
+     WHERE id = $3
+     RETURNING *`,
     [status, updated_by, id],
   );
+
   return result.rows;
 };

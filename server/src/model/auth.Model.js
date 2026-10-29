@@ -1,6 +1,5 @@
 import { pool } from "../config/db.js";
 
-// Create a new user
 export const createUser = async ({
   name,
   email,
@@ -14,9 +13,10 @@ export const createUser = async ({
        email,
        hashed_password,
        role,
+       status,
        avatar
      )
-     VALUES ($1, $2, $3, $4, $5)
+     VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING
        id,
        name,
@@ -26,20 +26,17 @@ export const createUser = async ({
        avatar,
        created_at,
        updated_at`,
-    [name, email, hashed_password, role, avatar ?? null],
+    [name, email, hashed_password, role, "approved", avatar ?? null],
   );
 
   return result.rows[0];
 };
 
-// Find a user by email for authentication
 export const findUserByEmail = async ({ email }) => {
   const result = await pool.query(
     `SELECT
        id,
        name,
-       fname,
-       lname,
        email,
        hashed_password,
        role,

@@ -60,29 +60,32 @@ function Register() {
       email: formData.email.trim().toLowerCase(),
       password: formData.password,
       confirmPassword: formData.confirmPassword,
-      role: "user",
     };
 
     setLoading(true);
 
     try {
-      console.log("Sending registration request...");
-
       const result = await register(userData);
 
       console.log("Registration result:", result);
 
-      setSuccessMessage("Registration request completed successfully.");
+      setSuccessMessage("Account created successfully.");
     } catch (error) {
       console.error("Registration failed:", error);
 
-      const serverErrors = error?.response?.data?.error;
+      const responseData = error?.response?.data;
+      const serverErrors = responseData?.errors;
 
       if (Array.isArray(serverErrors) && serverErrors.length > 0) {
-        setErrorMessage(serverErrors.map((item) => item.message).join(" "));
+        setErrorMessage(
+          serverErrors
+            .map((item) => item.message)
+            .filter(Boolean)
+            .join(" "),
+        );
       } else {
         setErrorMessage(
-          error?.response?.data?.message ||
+          responseData?.message ||
             error?.message ||
             "Registration failed. Please try again.",
         );

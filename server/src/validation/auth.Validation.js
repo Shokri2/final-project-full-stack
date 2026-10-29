@@ -35,7 +35,6 @@ export const createUserSchema = Joi.object({
     "string.base": "Avatar must be a text string.",
   }),
 })
-  // Reject unknown fields, including role
   .unknown(false);
 
 // ------------------- Login -------------------

@@ -14,24 +14,25 @@ import { useAuth } from "../../Hooks/useAuth";
 
 function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loading } = useAuth();
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
   const handleChange = (event) => {
-    setFormData({
-      ...formData,
-      [event.target.name]: event.target.value,
-    });
+    const { name, value } = event.target;
+
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    login(formData);
-    // سنربط تسجيل الدخول بالـ Backend لاحقًا
-    console.log("Login form:", formData);
+    await login(formData);
   };
 
   return (
@@ -84,6 +85,7 @@ function Login() {
                 fullWidth
                 required
                 autoComplete="email"
+                disabled={loading}
               />
 
               <TextField
@@ -95,22 +97,30 @@ function Login() {
                 fullWidth
                 required
                 autoComplete="current-password"
+                disabled={loading}
               />
 
               <Button
                 type="submit"
                 variant="contained"
                 size="large"
+                disabled={loading}
                 sx={{
                   py: 1.4,
                   bgcolor: "#246B3D",
                   borderRadius: 2,
                   textTransform: "none",
                   fontWeight: 700,
-                  "&:hover": { bgcolor: "#194D2C" },
+                  "&:hover": {
+                    bgcolor: "#194D2C",
+                  },
+                  "&.Mui-disabled": {
+                    bgcolor: "#A5B9A9",
+                    color: "#FFFFFF",
+                  },
                 }}
               >
-                Sign In
+                {loading ? "Signing In..." : "Sign In"}
               </Button>
             </Stack>
           </Box>
@@ -132,7 +142,12 @@ function Login() {
           <Button
             fullWidth
             onClick={() => navigate("/")}
-            sx={{ mt: 1, color: "#526357", textTransform: "none" }}
+            disabled={loading}
+            sx={{
+              mt: 1,
+              color: "#526357",
+              textTransform: "none",
+            }}
           >
             Back to Home
           </Button>
