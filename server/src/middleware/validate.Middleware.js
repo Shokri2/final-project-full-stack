@@ -3,19 +3,20 @@ export const validate = (schema, property = "body") => {
     const { error, value } = schema.validate(req[property], {
       abortEarly: false,
       stripUnknown: true,
+      convert: true,
     });
 
     if (error) {
       return res.status(400).json({
         message: "Validation Error",
-        error: error.details.map((item) => ({
-          field: item.path.join(""),
+        errors: error.details.map((item) => ({
+          field: item.path.join("."),
           message: item.message,
         })),
       });
     }
 
     req[property] = value;
-    next();
+    return next();
   };
 };
