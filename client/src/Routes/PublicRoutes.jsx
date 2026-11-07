@@ -9,12 +9,14 @@ import Login from "../Components/Auth/Login.jsx";
 import PublicLayout from "../Components/Layouts/PublicLayout.jsx";
 import UnderConstruction from "../Pages/UnderConstruction/UnderConstruction.jsx";
 import GuestRoute from "./GuestRoute.jsx";
+import VerifyEmail from "../Pages/VerifyEmail/VerifyEmail.jsx";
 
 export const publicRoutes = (
   <>
     <Route path="/" element={<LandingPage />} />
     <Route path="/about" element={<About />} />
     <Route path="/crop-guide" element={<CropGuide />} />
+    <Route path="/verify-email" element={<VerifyEmail />} />
 
     <Route element={<PublicLayout />}>
       <Route path="/home" element={<Home />} />
@@ -22,7 +24,6 @@ export const publicRoutes = (
       <Route path="/crops/:id" element={<UnderConstruction title="Crop Details" />} />
       <Route path="/feedback" element={<UnderConstruction title="Reviews" />} />
       <Route path="/contact" element={<UnderConstruction title="Contact Us" />} />
-      <Route path="/verify-email" element={<UnderConstruction title="Verify Email" />} />
     </Route>
 
     <Route element={<GuestRoute />}>

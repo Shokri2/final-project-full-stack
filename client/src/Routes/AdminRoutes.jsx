@@ -2,6 +2,8 @@ import { Navigate, Route } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import AdminLayout from "../Components/Admin/AdminLayout.jsx";
 import UnderConstruction from "../Pages/UnderConstruction/UnderConstruction.jsx";
+import Profile from "../Pages/Profile/Profile.jsx";
+import ChangePassword from "../Pages/ChangePassword/ChangePassword.jsx";
 
 export const adminRoutes = (
   <Route element={<ProtectedRoute roles={["admin"]} />}>
@@ -17,8 +19,8 @@ export const adminRoutes = (
       <Route path="crops" element={<UnderConstruction title="Crops" />} />
       <Route path="messages" element={<UnderConstruction title="Messages" />} />
       <Route path="activities" element={<UnderConstruction title="Activity Log" />} />
-      <Route path="profile" element={<UnderConstruction title="Profile" />} />
-      <Route path="change-password" element={<UnderConstruction title="Change Password" />} />
+      <Route path="profile" element={<Profile />} />
+      <Route path="change-password" element={<ChangePassword />} />
     </Route>
   </Route>
 );
