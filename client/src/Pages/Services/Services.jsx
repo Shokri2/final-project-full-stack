@@ -1,143 +1,87 @@
-import {
-  Box,
-  Container,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  Button,
-} from "@mui/material";
-import { useNavigate } from "react-router-dom";
-import SpaOutlinedIcon from "@mui/icons-material/SpaOutlined";
-import WaterDropOutlinedIcon from "@mui/icons-material/WaterDropOutlined";
-import SensorsOutlinedIcon from "@mui/icons-material/SensorsOutlined";
-import MonitorHeartOutlinedIcon from "@mui/icons-material/MonitorHeartOutlined";
+import { Box, Button, Card, CardContent, Container, Typography } from "@mui/material";
+import { Link } from "react-router-dom";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import { services } from "../../Components/Services/servicesData";
 
 function Services() {
-  const navigate = useNavigate();
-
-  const services = [
-    {
-      icon: <SpaOutlinedIcon sx={{ fontSize: 42 }} />,
-      title: "Plant Management",
-      description:
-        "Organize your plants and keep their information accessible in one place.",
-    },
-    {
-      icon: <WaterDropOutlinedIcon sx={{ fontSize: 42 }} />,
-      title: "Smart Irrigation",
-      description:
-        "Manage watering and support more efficient use of water for your plants.",
-    },
-    {
-      icon: <SensorsOutlinedIcon sx={{ fontSize: 42 }} />,
-      title: "Device Monitoring",
-      description:
-        "View connected device information and monitor available sensor readings.",
-    },
-    {
-      icon: <MonitorHeartOutlinedIcon sx={{ fontSize: 42 }} />,
-      title: "Plant Health Tracking",
-      description:
-        "Follow plant conditions and use available data to support better care.",
-    },
-  ];
-
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#F7FAF5", py: 8 }}>
-      <Container maxWidth="lg">
-        <Box sx={{ textAlign: "center", mb: 6 }}>
-          <Typography
-            variant="overline"
-            sx={{ color: "#388E3C", fontWeight: 800, letterSpacing: 2 }}
-          >
-            OUR SERVICES
+    <>
+      <Box sx={{ bgcolor: "#12301F", color: "#fff", py: { xs: 7, md: 10 }, textAlign: "center" }}>
+        <Container maxWidth="md">
+          <Typography sx={{ color: "#D9F36A", fontWeight: 800, letterSpacing: 4, fontSize: 13 }}>OUR SERVICES</Typography>
+          <Typography component="h1" sx={{ fontWeight: 900, fontSize: { xs: 34, md: 50 }, lineHeight: 1.1, mt: 1.5 }}>
+            Everything you need to{" "}
+            <Box component="span" sx={{ color: "#D9F36A", fontStyle: "italic", fontWeight: 400 }}>
+              grow with confidence
+            </Box>
           </Typography>
+          <Typography sx={{ mt: 2.5, fontSize: { xs: 16, md: 18 }, lineHeight: 1.8, opacity: 0.85 }}>
+            AL-HASAD GATE combines a practical crop guide with direct access to agronomists who specialise in your
+            crops.
+          </Typography>
+        </Container>
+      </Box>
 
-          <Typography
-            variant="h3"
+      <Box sx={{ py: { xs: 7, md: 10 }, background: "linear-gradient(180deg, #1B3321 0%, #12301F 100%)" }}>
+        <Container maxWidth="lg">
+          <Box
             sx={{
-              fontWeight: 800,
-              color: "#183D2A",
-              mt: 1,
-              mb: 2,
-              fontSize: { xs: "2rem", md: "2.8rem" },
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
+              gap: 3,
             }}
           >
-            Smart Solutions for Your Plants
-          </Typography>
-
-          <Typography
-            color="text.secondary"
-            sx={{ maxWidth: 650, mx: "auto", lineHeight: 1.8 }}
-          >
-            Explore GreenBot features designed to help you manage plant care,
-            monitor conditions, and organize irrigation.
-          </Typography>
-        </Box>
-
-        <Grid container spacing={3}>
-          {services.map((service) => (
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={service.title}>
+            {services.map((service) => (
               <Card
+                key={service.title}
+                elevation={0}
                 sx={{
                   height: "100%",
-                  borderRadius: 4,
-                  border: "1px solid #E5EDE4",
-                  boxShadow: "none",
-                  transition: "0.25s",
-                  "&:hover": {
-                    transform: "translateY(-5px)",
-                    boxShadow: "0 16px 35px rgba(25,77,44,0.08)",
-                  },
+                  borderRadius: 5,
+                  color: "#fff",
+                  bgcolor: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  transition: "transform 0.25s, background-color 0.25s",
+                  "&:hover": { transform: "translateY(-6px)", bgcolor: "rgba(255,255,255,0.1)" },
                 }}
               >
-                <CardContent sx={{ p: 3 }}>
-                  <Box sx={{ color: "#388E3C", mb: 2 }}>{service.icon}</Box>
-
-                  <Typography
-                    variant="h6"
-                    fontWeight={700}
-                    sx={{ mb: 1.5, color: "#183D2A" }}
+                <CardContent sx={{ p: 3.5, height: "100%", display: "flex", flexDirection: "column" }}>
+                  <Box
+                    sx={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: 3,
+                      display: "grid",
+                      placeItems: "center",
+                      bgcolor: "#D9F36A",
+                      color: "#183D2A",
+                      mb: 2.5,
+                      "& svg": { fontSize: 30 },
+                    }}
                   >
+                    {service.icon}
+                  </Box>
+                  <Typography variant="h6" fontWeight={800}>
                     {service.title}
                   </Typography>
-
-                  <Typography
-                    color="text.secondary"
-                    sx={{ lineHeight: 1.8, mb: 2 }}
-                  >
+                  <Typography sx={{ color: "rgba(255,255,255,0.72)", lineHeight: 1.8, mt: 1, flex: 1 }}>
                     {service.description}
                   </Typography>
+                  <Button
+                    component={Link}
+                    to={service.to}
+                    endIcon={<ArrowForwardIcon />}
+                    sx={{ color: "#D9F36A", alignSelf: "flex-start", mt: 2, px: 0, fontWeight: 700 }}
+                  >
+                    {service.action}
+                  </Button>
                 </CardContent>
               </Card>
-            </Grid>
-          ))}
-        </Grid>
-
-        <Box sx={{ textAlign: "center", mt: 6 }}>
-          <Typography variant="h5" fontWeight={700} sx={{ mb: 2 }}>
-            Ready to get started?
-          </Typography>
-
-          <Button
-            variant="contained"
-            size="large"
-            onClick={() => navigate("/register")}
-            sx={{
-              bgcolor: "#246B3D",
-              borderRadius: 2,
-              px: 4,
-              py: 1.4,
-              textTransform: "none",
-              "&:hover": { bgcolor: "#194D2C" },
-            }}
-          >
-            Create Your Account
-          </Button>
-        </Box>
-      </Container>
-    </Box>
+            ))}
+          </Box>
+        </Container>
+      </Box>
+    </>
   );
 }
 
