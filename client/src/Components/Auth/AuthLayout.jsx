@@ -2,11 +2,11 @@ import { Box, Button, Container, Paper, Typography } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
 import { Link } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { lightTheme } from "../../Context/theme";
+import { darkTheme } from "../../Context/theme";
 
 function AuthLayout({ title, subtitle, children, footer, maxWidth = "sm" }) {
   return (
-    <ThemeProvider theme={lightTheme}>
+    <ThemeProvider theme={darkTheme}>
       <Box
         sx={{
           minHeight: "100vh",
@@ -57,7 +57,7 @@ function AuthLayout({ title, subtitle, children, footer, maxWidth = "sm" }) {
               borderRadius: 4,
               border: 1,
               borderColor: "divider",
-              boxShadow: "0 12px 40px rgba(24,61,42,0.08)",
+              boxShadow: "0 18px 50px rgba(0,0,0,0.35)",
             }}
           >
             <Typography variant="h5" component="h1" fontWeight={800} sx={{ mb: 1 }}>

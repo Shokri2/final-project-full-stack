@@ -1,7 +1,6 @@
 import { useCallback } from "react";
-import { Box, Button, Stack, Typography } from "@mui/material";
+import { Box, Button, Container, Typography } from "@mui/material";
 import { Link, useLocation } from "react-router-dom";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SupportAgentOutlinedIcon from "@mui/icons-material/SupportAgentOutlined";
 import CropHero from "./CropHero";
 import CropInfoGrid from "./CropInfoGrid";
@@ -53,7 +52,7 @@ function AskAgronomistButton({ cropId }) {
   );
 }
 
-function CropDetailsContent({ cropId, backTo }) {
+function CropDetailsContent({ cropId, backTo, inDashboard }) {
   const fetchCrop = useCallback(() => getCropDetails(cropId).then((data) => ({ data })), [cropId]);
   const { data, loading, error, refetch } = useFetch(fetchCrop, [fetchCrop]);
 
@@ -62,38 +61,43 @@ function CropDetailsContent({ cropId, backTo }) {
   }
 
   if (error) {
-    return <ErrorState title="Crop not available" message={error} onRetry={refetch} />;
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <ErrorState title="Crop not available" message={error} onRetry={refetch} />
+      </Container>
+    );
   }
 
   const crop = data.data;
 
   return (
     <Box>
-      <Stack direction="row" sx={{ mb: 2 }}>
-        <Button component={Link} to={backTo} startIcon={<ArrowBackIcon />} color="inherit">
-          All crops
-        </Button>
-      </Stack>
+      <CropHero
+        crop={crop}
+        backTo={backTo}
+        action={<AskAgronomistButton cropId={crop.id} />}
+        sx={inDashboard ? { mx: { xs: -2, sm: -3 }, mt: { xs: -2, sm: -3 }, width: "auto" } : undefined}
+      />
 
-      <CropHero crop={crop} action={<AskAgronomistButton cropId={crop.id} />} />
+      <Container maxWidth="lg" disableGutters={inDashboard} sx={{ pb: { xs: 5, md: 8 } }}>
+        {crop.description && (
+          <Typography sx={{ mt: 4, fontSize: 18, lineHeight: 1.8, maxWidth: 820 }} color="text.secondary">
+            {crop.description}
+          </Typography>
+        )}
 
-      {crop.description && (
-        <Typography sx={{ mt: 4, fontSize: 18, lineHeight: 1.8, maxWidth: 820 }} color="text.secondary">
-          {crop.description}
-        </Typography>
-      )}
+        <Section title="Growing requirements">
+          <CropInfoGrid crop={crop} />
+        </Section>
 
-      <Section title="Growing requirements">
-        <CropInfoGrid crop={crop} />
-      </Section>
+        <Section title="Growth stages" subtitle="What to expect from planting to harvest.">
+          <GrowthStages stages={crop.growth_stages} />
+        </Section>
 
-      <Section title="Growth stages" subtitle="What to expect from planting to harvest.">
-        <GrowthStages stages={crop.growth_stages} />
-      </Section>
-
-      <Section title="Farmer reviews" subtitle="Only reviews approved by our team are shown.">
-        <CropReviews cropId={crop.id} />
-      </Section>
+        <Section title="Farmer reviews" subtitle="Only reviews approved by our team are shown.">
+          <CropReviews cropId={crop.id} />
+        </Section>
+      </Container>
     </Box>
   );
 }

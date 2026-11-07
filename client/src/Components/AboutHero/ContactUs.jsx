@@ -1,40 +1,16 @@
-import { useState } from "react";
 import {
   Box,
   Container,
   Typography,
-  TextField,
-  Button,
   Stack,
 } from "@mui/material";
 
 import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
-import SendRoundedIcon from "@mui/icons-material/SendRounded";
+import ContactForm from "../Contact/ContactForm";
 
 export default function ContactUs() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    message: "",
-  });
-
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleChange = (event) => {
-    setFormData((prev) => ({
-      ...prev,
-      [event.target.name]: event.target.value,
-    }));
-    setSubmitted(false);
-  };
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    setSubmitted(true);
-  };
-
   const contactDetails = [
     {
       label: "PHONE",
@@ -52,34 +28,6 @@ export default function ContactUs() {
       icon: LocationOnOutlinedIcon,
     },
   ];
-
-  const fieldStyles = {
-    "& .MuiOutlinedInput-root": {
-      borderRadius: "12px",
-      bgcolor: "#FFFFFF",
-      color: "#263A2A",
-      "& fieldset": {
-        borderColor: "#DCE5D7",
-      },
-      "&:hover fieldset": {
-        borderColor: "#829B70",
-      },
-      "&.Mui-focused fieldset": {
-        borderColor: "#456448",
-        borderWidth: "2px",
-      },
-    },
-    "& .MuiInputLabel-root": {
-      color: "#687568",
-      "&.Mui-focused": {
-        color: "#456448",
-      },
-    },
-    "& .MuiInputBase-input::placeholder": {
-      color: "#929C91",
-      opacity: 1,
-    },
-  };
 
   return (
     <Box
@@ -203,8 +151,6 @@ export default function ContactUs() {
           </Box>
 
           <Box
-            component="form"
-            onSubmit={handleSubmit}
             sx={{
               p: { xs: 2.5, sm: 4, md: 5 },
               border: "1px solid rgba(255,255,255,0.35)",
@@ -212,114 +158,7 @@ export default function ContactUs() {
               boxShadow: "0 18px 45px rgba(20, 39, 23, 0.2)",
             }}
           >
-            <Typography
-              component="h3"
-              sx={{
-                fontSize: { xs: 23, md: 27 },
-                fontWeight: 800,
-                color: "#f4fbf5",
-                mb: 1,
-              }}
-            >
-              Send Us a Message
-            </Typography>
-
-            <Typography
-              sx={{
-                color: "#ffffff",
-                fontSize: 14,
-                lineHeight: 1.8,
-                mb: 3,
-              }}
-            >
-              Let’s grow a smarter future together
-            </Typography>
-
-            <Stack spacing={2.5}>
-              <TextField
-                fullWidth
-                required
-                name="name"
-                label="Your Name"
-                placeholder="Enter your full name"
-                value={formData.name}
-                onChange={handleChange}
-                autoComplete="name"
-                inputProps={{ maxLength: 100 }}
-                sx={fieldStyles}
-              />
-
-              <TextField
-                fullWidth
-                required
-                name="email"
-                type="email"
-                label="Your Email"
-                placeholder="Enter your email address"
-                value={formData.email}
-                onChange={handleChange}
-                autoComplete="email"
-                inputProps={{ maxLength: 254 }}
-                sx={fieldStyles}
-              />
-
-              <TextField
-                fullWidth
-                required
-                multiline
-                minRows={4}
-                name="message"
-                label="Your Message"
-                placeholder="Tell us about your farm or how we can help..."
-                value={formData.message}
-                onChange={handleChange}
-                inputProps={{ maxLength: 2000 }}
-                sx={fieldStyles}
-              />
-
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                sx={{
-                  py: 1.7,
-                  borderRadius: "12px",
-                  bgcolor: "#dee1de",
-                  color: "#393838",
-                  fontSize: 15,
-                  fontWeight: 700,
-                  textTransform: "none",
-                  boxShadow: "none",
-                  transition: "all 0.25s ease",
-                  "&:hover": {
-                    bgcolor: "#dbe1dd",
-                    boxShadow: "0 8px 20px rgba(53,79,56,0.2)",
-                    transform: "translateY(-2px)",
-                  },
-                 
-                }}
-              >
-                Send Message
-              </Button>
-
-              {submitted && (
-                <Typography
-                  role="status"
-                  sx={{
-                    color: "#354F38",
-                    bgcolor: "#EAF1E3",
-                    borderRadius: "10px",
-                    p: 1.5,
-                    fontSize: 13,
-                    textAlign: "center",
-                    lineHeight: 1.8,
-                  }}
-                >
-                  Form validated successfully Connect a backend or email
-                  service to send your message
-                </Typography>
-              )}
-            </Stack>
+            <ContactForm />
           </Box>
         </Box>
       </Container>
