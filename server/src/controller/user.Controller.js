@@ -1,30 +1,14 @@
+import bcrypt from "bcrypt";
 import {
-  getAllUsers,
   getUserById,
-  deletUserById,
   updateUser,
-  updateUserStatus,
+  getUserPasswordById,
+  updateUserPassword,
 } from "../model/user.Model.js";
+import { revokeAllUserRefreshTokenSessions } from "../model/refreshToken.Model.js";
+import { logActivity } from "../utils/activityLog.js";
 
-// Get all users: admins only (protected in Routes)
-export const getUsers = async (req, res) => {
-  try {
-    const users = await getAllUsers();
-
-    return res.status(200).json({
-      users,
-    });
-  } catch (error) {
-    console.error("Get all users error:", error);
-
-    return res.status(500).json({
-      message: "Internal server error",
-    });
-  }
-};
-
-// Get a specific user: users can view their own profile, admins can view any profile
-export const getUser = async (req, res) => {
+export const getUser = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -46,42 +30,11 @@ export const getUser = async (req, res) => {
       user,
     });
   } catch (error) {
-    console.error("Get user error:", error);
-
-    return res.status(500).json({
-      message: "Internal server error",
-    });
+    return next(error);
   }
 };
 
-// Delete a user: admins only (protected in Routes)
-export const deleteUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const user = await deletUserById(id);
-
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
-    }
-
-    return res.status(200).json({
-      message: "User deleted successfully",
-      user,
-    });
-  } catch (error) {
-    console.error("Delete user error:", error);
-
-    return res.status(500).json({
-      message: "Internal server error",
-    });
-  }
-};
-
-// Update a user: users can update their own profile, admins can update any profile
-export const updateUserController = async (req, res) => {
+export const updateUserController = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -91,16 +44,13 @@ export const updateUserController = async (req, res) => {
       });
     }
 
-    // Only allow profile fields; do not accept role or status from the request
-    const { fname, lname, email, avatar } = req.body;
+    const { name, phone, avatar } = req.body;
 
     const user = await updateUser({
       id,
-      fname,
-      lname,
-      email,
+      name,
+      phone,
       avatar,
-      updated_at: new Date(),
     });
 
     if (!user) {
@@ -108,41 +58,29 @@ export const updateUserController = async (req, res) => {
         message: "User not found",
       });
     }
+
+    await logActivity({
+      userId: req.user.id,
+      action: "USER_PROFILE_UPDATED",
+      entityType: "user",
+      entityId: user.id,
+      ip: req.ip,
+    });
 
     return res.status(200).json({
       message: "User updated successfully",
       user,
     });
   } catch (error) {
-    console.error("Update user error:", error);
-
-    return res.status(500).json({
-      message: "Internal server error",
-    });
+    return next(error);
   }
 };
 
-// Update user status: admins only (protected in Routes)
-export const updateUserStatusController = async (req, res) => {
+export const changePasswordController = async (req, res, next) => {
   try {
-    const { id } = req.params;
-    const { status } = req.body;
+    const { currentPassword, newPassword } = req.body;
 
-    if (!status) {
-      return res.status(400).json({
-        message: "Status is required",
-      });
-    }
-
-    const allowedStatuses = ["pending", "approved", "rejected"];
-
-    if (!allowedStatuses.includes(status)) {
-      return res.status(400).json({
-        message: "Invalid status",
-      });
-    }
-
-    const user = await updateUserStatus(id, status);
+    const user = await getUserPasswordById(req.user.id);
 
     if (!user) {
       return res.status(404).json({
@@ -150,15 +88,35 @@ export const updateUserStatusController = async (req, res) => {
       });
     }
 
+    const isMatch = await bcrypt.compare(currentPassword, user.hashed_password);
+
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Current password is incorrect.",
+      });
+    }
+
+    const hashed_password = await bcrypt.hash(newPassword, 12);
+
+    await updateUserPassword(req.user.id, hashed_password);
+
+    await revokeAllUserRefreshTokenSessions(
+      req.user.id,
+      req.cookies?.refreshTokens ?? null,
+    );
+
+    await logActivity({
+      userId: req.user.id,
+      action: "PASSWORD_CHANGED",
+      entityType: "user",
+      entityId: req.user.id,
+      ip: req.ip,
+    });
+
     return res.status(200).json({
-      message: "User status updated successfully",
-      user,
+      message: "Password changed successfully.",
     });
   } catch (error) {
-    console.error("Update user status error:", error);
-
-    return res.status(500).json({
-      message: "Internal server error",
-    });
+    return next(error);
   }
 };

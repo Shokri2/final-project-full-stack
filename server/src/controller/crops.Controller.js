@@ -4,155 +4,81 @@ import {
   createCrop as createCropModel,
   updateCrop as updateCropModel,
   deleteCrop as deleteCropModel,
+  updateCropStatus,
 } from "../model/crops.Model.js";
+import { getCategoryById } from "../model/categories.Model.js";
+import { logActivity } from "../utils/activityLog.js";
+import { buildPagination } from "../utils/pagination.js";
 
-const validId = (id) => /^\d+$/.test(id) && Number(id) > 0;
+const categoryExists = async (categoryId) => {
+  const categories = await getCategoryById({ id: categoryId });
+  return categories.length > 0;
+};
 
-const allowedFields = [
-  "name",
-  "name_ar",
-  "image",
-  "description",
-  "water_needs",
-  "temperature_min",
-  "temperature_max",
-  "sunlight",
-  "soil_type",
-  "growth_duration_days",
-];
+const listCrops = (includeInactive) => {
+  return async (req, res, next) => {
+    try {
+      const { crops, total } = await getAllCrops(req.query, { includeInactive });
 
-const numericFields = [
-  "temperature_min",
-  "temperature_max",
-  "growth_duration_days",
-];
-
-const validateCropBody = (body, isCreate = false) => {
-  if (!body || typeof body !== "object" || Array.isArray(body)) {
-    return "Request body must be an object.";
-  }
-
-  if (isCreate && (!body.name?.trim() || !body.name_ar?.trim())) {
-    return "English and Arabic crop names are required.";
-  }
-
-  for (const field of ["name", "name_ar"]) {
-    if (
-      body[field] !== undefined &&
-      (typeof body[field] !== "string" || !body[field].trim())
-    ) {
-      return `${field} must be a non-empty string.`;
+      return res.status(200).json({
+        success: true,
+        count: crops.length,
+        data: crops,
+        pagination: buildPagination(req.query, total),
+      });
+    } catch (error) {
+      return next(error);
     }
-  }
+  };
+};
 
-  for (const field of numericFields) {
-    if (body[field] !== undefined && body[field] !== null) {
-      const value = Number(body[field]);
+const cropDetails = (includeInactive) => {
+  return async (req, res, next) => {
+    try {
+      const crop = await getCropById(req.params.id, { includeInactive });
 
-      if (!Number.isFinite(value)) {
-        return `${field} must be a valid number.`;
+      if (!crop) {
+        return res.status(404).json({
+          success: false,
+          message: "Crop not found.",
+        });
       }
 
-      if (
-        field === "growth_duration_days" &&
-        (!Number.isInteger(value) || value < 1)
-      ) {
-        return "growth_duration_days must be a positive integer.";
-      }
+      return res.status(200).json({
+        success: true,
+        data: crop,
+      });
+    } catch (error) {
+      return next(error);
     }
-  }
-
-  for (const field of allowedFields) {
-    if (
-      body[field] !== undefined &&
-      body[field] !== null &&
-      !numericFields.includes(field) &&
-      typeof body[field] !== "string"
-    ) {
-      return `${field} must be a string or null.`;
-    }
-  }
-
-  if (
-    body.temperature_min != null &&
-    body.temperature_max != null &&
-    Number(body.temperature_min) > Number(body.temperature_max)
-  ) {
-    return "Minimum temperature cannot exceed maximum temperature.";
-  }
-
-  return null;
+  };
 };
 
-export const getCrops = async (req, res) => {
+export const getCrops = listCrops(false);
+export const getAllCropsForAdmin = listCrops(true);
+export const getCropDetails = cropDetails(false);
+export const getCropDetailsForAdmin = cropDetails(true);
+
+export const createCrop = async (req, res, next) => {
   try {
-    const crops = await getAllCrops();
-
-    return res.status(200).json({
-      success: true,
-      count: crops.length,
-      data: crops,
-    });
-  } catch (error) {
-    console.error("GET CROPS ERROR:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to retrieve crops.",
-    });
-  }
-};
-
-export const getCropDetails = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    if (!validId(id)) {
+    if (!(await categoryExists(req.body.category_id))) {
       return res.status(400).json({
         success: false,
-        message: "Invalid crop ID.",
+        message: "Selected category does not exist.",
       });
     }
 
-    const crop = await getCropById(Number(id));
+    const cropId = await createCropModel(req.body, req.user.id);
+    const crop = await getCropById(cropId, { includeInactive: true });
 
-    if (!crop) {
-      return res.status(404).json({
-        success: false,
-        message: "Crop not found.",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: crop,
+    await logActivity({
+      userId: req.user.id,
+      action: "CROP_CREATED",
+      entityType: "crop",
+      entityId: cropId,
+      details: { name: crop.name },
+      ip: req.ip,
     });
-  } catch (error) {
-    console.error("GET CROP DETAILS ERROR:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to retrieve crop details.",
-    });
-  }
-};
-
-export const createCrop = async (req, res) => {
-  try {
-    const errorMessage = validateCropBody(req.body, true);
-
-    if (errorMessage) {
-      return res.status(400).json({
-        success: false,
-        message: errorMessage,
-      });
-    }
-
-    const cropData = Object.fromEntries(
-      Object.entries(req.body).filter(([key]) => allowedFields.includes(key)),
-    );
-
-    const crop = await createCropModel(cropData);
 
     return res.status(201).json({
       success: true,
@@ -160,49 +86,69 @@ export const createCrop = async (req, res) => {
       data: crop,
     });
   } catch (error) {
-    console.error("CREATE CROP ERROR:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to create crop.",
-    });
+    return next(error);
   }
 };
 
-export const updateCrop = async (req, res) => {
+export const updateCrop = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    if (!validId(id)) {
+    if (req.body.category_id && !(await categoryExists(req.body.category_id))) {
       return res.status(400).json({
         success: false,
-        message: "Invalid crop ID.",
+        message: "Selected category does not exist.",
       });
     }
 
-    const cropData = Object.fromEntries(
-      Object.entries(req.body ?? {}).filter(([key]) =>
-        allowedFields.includes(key),
-      ),
-    );
+    const current = await getCropById(id, { includeInactive: true });
 
-    if (Object.keys(cropData).length === 0) {
-      return res.status(400).json({
+    if (!current) {
+      return res.status(404).json({
         success: false,
-        message: "Provide at least one valid crop field to update.",
+        message: "Crop not found.",
       });
     }
 
-    const errorMessage = validateCropBody(cropData);
+    const tempMin = req.body.temperature_min !== undefined ? req.body.temperature_min : current.temperature_min;
+    const tempMax = req.body.temperature_max !== undefined ? req.body.temperature_max : current.temperature_max;
 
-    if (errorMessage) {
+    if (tempMin != null && tempMax != null && Number(tempMin) > Number(tempMax)) {
       return res.status(400).json({
         success: false,
-        message: errorMessage,
+        message: "Minimum temperature cannot exceed maximum temperature.",
       });
     }
 
-    const crop = await updateCropModel(Number(id), cropData);
+    await updateCropModel(id, req.body, req.user.id);
+
+    const crop = await getCropById(id, { includeInactive: true });
+
+    await logActivity({
+      userId: req.user.id,
+      action: "CROP_UPDATED",
+      entityType: "crop",
+      entityId: Number(id),
+      details: { fields: Object.keys(req.body) },
+      ip: req.ip,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Crop updated successfully.",
+      data: crop,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const updateCropStatusController = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { is_active } = req.body;
+
+    const crop = await updateCropStatus(id, is_active, req.user.id);
 
     if (!crop) {
       return res.status(404).json({
@@ -211,51 +157,59 @@ export const updateCrop = async (req, res) => {
       });
     }
 
+    await logActivity({
+      userId: req.user.id,
+      action: is_active ? "CROP_ACTIVATED" : "CROP_DEACTIVATED",
+      entityType: "crop",
+      entityId: crop.id,
+      details: { name: crop.name },
+      ip: req.ip,
+    });
+
     return res.status(200).json({
       success: true,
-      message: "Crop updated successfully.",
+      message: is_active ? "Crop activated successfully." : "Crop deactivated successfully.",
       data: crop,
     });
   } catch (error) {
-    console.error("UPDATE CROP ERROR:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to update crop.",
-    });
+    return next(error);
   }
 };
 
-export const deleteCrop = async (req, res) => {
+export const deleteCrop = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    if (!validId(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid crop ID.",
-      });
-    }
+    const result = await deleteCropModel(id);
 
-    const deleted = await deleteCropModel(Number(id));
-
-    if (!deleted) {
+    if (result.reason === "NOT_FOUND") {
       return res.status(404).json({
         success: false,
         message: "Crop not found.",
       });
     }
 
+    if (result.reason === "HAS_REQUESTS") {
+      return res.status(409).json({
+        success: false,
+        message: `This crop has ${result.requestsCount} consultation request(s). Deactivate it instead of deleting it.`,
+      });
+    }
+
+    await logActivity({
+      userId: req.user.id,
+      action: "CROP_DELETED",
+      entityType: "crop",
+      entityId: Number(id),
+      details: { name: result.name },
+      ip: req.ip,
+    });
+
     return res.status(200).json({
       success: true,
       message: "Crop deleted successfully.",
     });
   } catch (error) {
-    console.error("DELETE CROP ERROR:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to delete crop.",
-    });
+    return next(error);
   }
 };

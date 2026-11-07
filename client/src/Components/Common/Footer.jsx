@@ -58,16 +58,12 @@ export default function Footer() {
         <Grid
           container
           columnSpacing={{ xs: 3, md: 5, lg: 8 }}
-          rowSpacing={4}
-          alignItems="flex-start"
-          justifyContent="space-between"
-        >
-          <Grid item xs={12} md={4}>
+          rowSpacing={4} sx={{ justifyContent: "space-between", alignItems: "flex-start" }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Stack
               direction="row"
               spacing={1.5}
-              alignItems="center"
-              sx={{ mb: 2 }}
+              sx={{ alignItems: "center", mb: 2 }}
             >
               <Typography
                 variant="h6"
@@ -137,9 +133,7 @@ export default function Footer() {
           </Grid>
 
           <Grid
-            item
-            xs={12}
-            md={8}
+            size={{ xs: 12, md: 8 }}
             sx={{
               ml: "auto",
               display: "flex",
@@ -150,14 +144,13 @@ export default function Footer() {
               container
               columnSpacing={{ xs: 2, sm: 3, lg: 5 }}
               rowSpacing={4}
-              justifyContent="space-between"
-              sx={{
+              sx={{ justifyContent: "space-between",
                 width: "100%",
                 maxWidth: 850,
                 ml: "auto",
               }}
             >
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Typography sx={headingStyle}>Quick Links</Typography>
 
                 <Stack spacing={1.5}>
@@ -169,10 +162,23 @@ export default function Footer() {
                     About Us
                   </Link>
 
-                  <Link component={RouterLink} to="/services" sx={linkStyle}>
-                    Our Services
+                  <Link component={RouterLink} to="/crop-guide" sx={linkStyle}>
+                    Crop Guide
                   </Link>
 
+                  <Link component={RouterLink} to="/smart-farming" sx={linkStyle}>
+                    Smart Farming
+                  </Link>
+
+                  <Link component={RouterLink} to="/contact" sx={linkStyle}>
+                    Contact Us
+                  </Link>
+                </Stack>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Typography sx={headingStyle}>Account</Typography>
+
+                <Stack spacing={1.5}>
                   <Link component={RouterLink} to="/login" sx={linkStyle}>
                     Login
                   </Link>
@@ -180,27 +186,18 @@ export default function Footer() {
                   <Link component={RouterLink} to="/register" sx={linkStyle}>
                     Create Account
                   </Link>
-                </Stack>
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <Typography sx={headingStyle}>Our Services</Typography>
 
-                <Stack spacing={1.5}>
-                  <Typography sx={linkStyle}>Plant Management</Typography>
-
-                  <Typography sx={linkStyle}>Smart Irrigation</Typography>
-
-                  <Typography sx={linkStyle}>Crop Monitoring</Typography>
-
-                  <Typography sx={linkStyle}>Agricultural Robot</Typography>
+                  <Link component={RouterLink} to="/verify-email" sx={linkStyle}>
+                    Verify Email
+                  </Link>
                 </Stack>
               </Grid>
 
-              <Grid item xs={12} sm={4}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Typography sx={headingStyle}>Contact Us</Typography>
 
                 <Stack spacing={2}>
-                  <Stack direction="row" spacing={1.2} alignItems="center">
+                  <Stack direction="row" spacing={1.2} sx={{ alignItems: "center" }}>
                     <EmailIcon sx={{ color: "#D9F36A", flexShrink: 0 }} />
 
                     <Typography
@@ -214,14 +211,13 @@ export default function Footer() {
                     </Typography>
                   </Stack>
 
-                  <Stack direction="row" spacing={1.2} alignItems="center">
+                  <Stack direction="row" spacing={1.2} sx={{ alignItems: "center" }}>
                     <LocationOnIcon sx={{ color: "#D9F36A", flexShrink: 0 }} />
 
                     <Typography sx={{ color: "#D1DED5", fontSize: 14 }}>
                       Jordan
                     </Typography>
-                  </Stack>
-                </Stack>
+                  </Stack>                </Stack>
               </Grid>
             </Grid>
           </Grid>

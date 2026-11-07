@@ -1,62 +1,42 @@
-
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import api from "../api";
 import { useAuthContext } from "../Context/AuthContext";
+import { loginRequest, logoutRequest, registerRequest } from "../api/authApi";
+import { getErrorCode, getErrorMessage } from "../utils/errors";
+import { getRoleHome } from "../utils/roles";
 
 export const useAuth = () => {
   const navigate = useNavigate();
-  const { currentUser, setCurrentUser } = useAuthContext();
+  const location = useLocation();
+  const { currentUser, setCurrentUser, refreshUser, authLoading } = useAuthContext();
   const [loading, setLoading] = useState(false);
 
   const login = async (userData) => {
     try {
-      if (!userData.email || !userData.password) {
-        toast.error("Please fill in email and password.");
-        return;
-      }
-
       setLoading(true);
 
-      const res = await api.post("/auth/login", userData);
+      const res = await loginRequest(userData);
       const user = res.data.user;
-      const accessToken = res.data.accessTokens;
 
-      if (!user) {
-        toast.error("User data was not returned from the server.");
-        return;
-      }
-
-      if (!accessToken) {
-        toast.error("Access token was not returned from the server.");
-        return;
-      }
-
-      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("accessToken", res.data.accessTokens);
       setCurrentUser(user);
 
-      toast.success(
-        res.data.message || res.data.meesage || "Login successful!",
-      );
+      toast.success(res.data.message || "Login successful!");
 
-      if (user.role === "admin") {
-        navigate("/admin/dashboard");
-      } else {
-        navigate("/user/dashboard");
-      }
+      const from = location.state?.from?.pathname;
+      navigate(from && from !== "/login" ? from : getRoleHome(user), { replace: true });
+
+      return { ok: true };
     } catch (error) {
-      const serverError =
-        error.response?.data?.error?.[0]?.message ||
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        "Login failed. Please check your credentials.";
+      if (getErrorCode(error) === "EMAIL_NOT_VERIFIED") {
+        toast.error(getErrorMessage(error));
+        navigate(`/verify-email?email=${encodeURIComponent(userData.email)}`);
+        return { ok: false };
+      }
 
-      toast.error(
-        typeof serverError === "string"
-          ? serverError
-          : "Login failed. Please check your credentials.",
-      );
+      toast.error(getErrorMessage(error, "Login failed. Please check your credentials."));
+      return { ok: false, error };
     } finally {
       setLoading(false);
     }
@@ -64,53 +44,41 @@ export const useAuth = () => {
 
   const register = async (userData) => {
     try {
-      if (!userData.email || !userData.password || !userData.name) {
-        toast.error("Please fill in all required fields.");
-        return;
-      }
-
       setLoading(true);
 
-      const res = await api.post("/auth/register", userData);
+      const res = await registerRequest(userData);
 
-      toast.success(
-        res.data.message || res.data.meesage || "Registration successful!",
-      );
+      toast.success(res.data.message || "Registration successful!");
+      navigate(`/verify-email?email=${encodeURIComponent(userData.email)}&registered=1`);
 
-      navigate("/login");
-      return res.data;
+      return { ok: true };
     } catch (error) {
-      const serverError =
-        error.response?.data?.error?.[0]?.message ||
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        "Registration failed. Please try again.";
-
-      toast.error(
-        typeof serverError === "string"
-          ? serverError
-          : "Registration failed. Please check your information.",
-      );
-
-      throw error;
+      toast.error(getErrorMessage(error, "Registration failed. Please try again."));
+      return { ok: false, error };
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("accessToken");
-    setCurrentUser(null);
-    toast.success("Logged out successfully.");
-    navigate("/");
+  const logout = async () => {
+    try {
+      await logoutRequest();
+    } catch {
+      toast.error("Could not reach the server, you have been logged out locally.");
+    } finally {
+      setCurrentUser(null);
+      toast.success("Logged out successfully.");
+      navigate("/");
+    }
   };
 
   return {
     login,
     register,
     logout,
+    refreshUser,
     currentUser,
     loading,
+    authLoading,
   };
 };
-
