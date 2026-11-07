@@ -7,6 +7,7 @@ import authRoutes from "./src/routes/auth.Routes.js";
 import categoryRoutes from "./src/routes/category.routes.js";
 import userRoutes from "./src/routes/user.Routes.js";
 import cropsRoutes from "./src/routes/crops.Routes.js";
+import activityRoutes from "./src/routes/activity.Routes.js";
 import { apiLimiter } from "./src/middleware/rateLimit.Middleware.js";
 import { getAllowedOrigins } from "./src/middleware/csrf.Middleware.js";
 import {
@@ -48,6 +49,7 @@ app.use("/api", authRoutes);
 app.use("/api", categoryRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/crops", cropsRoutes);
+app.use("/api/activities", activityRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

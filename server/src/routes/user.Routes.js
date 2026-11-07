@@ -2,9 +2,12 @@ import express from "express";
 import {
   getUsers,
   getUser,
+  createUserController,
   deleteUser,
   updateUserController,
   updateUserStatusController,
+  updateUserRoleController,
+  updateSpecialtiesController,
   changePasswordController,
 } from "../controller/user.Controller.js";
 import { authenticate } from "../middleware/authenticate.Middleware.js";
@@ -13,14 +16,32 @@ import { validate } from "../middleware/validate.Middleware.js";
 import { sensitiveRateLimiter } from "../middleware/authRateLimit.Middleware.js";
 import { changePasswordSchema } from "../validation/auth.Validation.js";
 import {
+  usersQuerySchema,
+  createUserByAdminSchema,
   updateUserSchema,
   updateUserStatusSchema,
+  updateUserRoleSchema,
+  updateSpecialtiesSchema,
   userIdParamSchema,
 } from "../validation/user.Validation.js";
 
 const router = express.Router();
 
-router.get("/Users", authenticate, authorize("admin"), getUsers);
+router.get(
+  "/Users",
+  authenticate,
+  authorize("admin"),
+  validate(usersQuerySchema, "query"),
+  getUsers,
+);
+
+router.post(
+  "/createUser",
+  authenticate,
+  authorize("admin"),
+  validate(createUserByAdminSchema),
+  createUserController,
+);
 
 router.get(
   "/getUser/:id",
@@ -60,6 +81,24 @@ router.patch(
   validate(userIdParamSchema, "params"),
   validate(updateUserStatusSchema),
   updateUserStatusController,
+);
+
+router.patch(
+  "/updateRole/:id/role",
+  authenticate,
+  authorize("admin"),
+  validate(userIdParamSchema, "params"),
+  validate(updateUserRoleSchema),
+  updateUserRoleController,
+);
+
+router.put(
+  "/updateSpecialties/:id",
+  authenticate,
+  authorize("admin"),
+  validate(userIdParamSchema, "params"),
+  validate(updateSpecialtiesSchema),
+  updateSpecialtiesController,
 );
 
 export default router;
