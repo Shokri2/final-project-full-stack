@@ -1,10 +1,60 @@
-import { Avatar, Box, Button, Card, CardContent, Chip, Container, Rating, Stack, Typography } from "@mui/material";
+import { Avatar, Box, Button, Chip, Container, Rating, Stack, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 import FormatQuoteRoundedIcon from "@mui/icons-material/FormatQuoteRounded";
 import VerifiedOutlinedIcon from "@mui/icons-material/VerifiedOutlined";
-import SectionTitle from "../SmartFarming/SectionTitle";
 import { useFetch } from "../../Hooks/useFetch";
 import { getPublicFeedback } from "../../api/feedbackApi";
+
+const LIME = "#D9F36A";
+
+function ReviewCard({ review }) {
+  return (
+    <Box
+      sx={{
+        flex: { xs: "1 1 100%", md: "0 1 calc((100% - 48px) / 3)" },
+        p: 3.5,
+        borderRadius: 5,
+        display: "flex",
+        flexDirection: "column",
+        gap: 2,
+        bgcolor: "rgba(255,255,255,0.06)",
+        border: "1px solid rgba(255,255,255,0.12)",
+        backdropFilter: "blur(6px)",
+        transition: "transform 0.25s ease, background-color 0.25s ease",
+        "&:hover": { transform: "translateY(-6px)", bgcolor: "rgba(255,255,255,0.1)" },
+      }}
+    >
+      <FormatQuoteRoundedIcon sx={{ fontSize: 44, color: LIME }} />
+      <Typography sx={{ color: "#F0F5F0", lineHeight: 1.8, fontSize: 17, flex: 1 }}>{review.comment}</Typography>
+      <Rating
+        value={review.rating}
+        readOnly
+        size="small"
+        sx={{ "& .MuiRating-iconFilled": { color: LIME }, "& .MuiRating-iconEmpty": { color: "rgba(255,255,255,0.3)" } }}
+      />
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", pt: 2, borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+        <Avatar sx={{ bgcolor: LIME, color: "#183D2A", fontWeight: 800 }}>{review.user_name?.[0]}</Avatar>
+        <Box sx={{ minWidth: 0, flex: 1 }}>
+          <Typography fontWeight={700} sx={{ color: "#fff" }} noWrap>
+            {review.user_name}
+          </Typography>
+          <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.65)" }} noWrap>
+            {review.crop_name ? `${review.crop_name} grower` : "AL-HASAD GATE member"}
+          </Typography>
+        </Box>
+        {review.verified_consultation && (
+          <Chip
+            icon={<VerifiedOutlinedIcon sx={{ color: `${LIME} !important` }} />}
+            label="Consulted"
+            size="small"
+            sx={{ color: LIME, borderColor: "rgba(217,243,106,0.5)" }}
+            variant="outlined"
+          />
+        )}
+      </Stack>
+    </Box>
+  );
+}
 
 function FarmerReviewsSection() {
   const { data, loading, error } = useFetch(() => getPublicFeedback({ limit: 3, sort: "created_at", order: "desc" }), []);
@@ -15,47 +65,38 @@ function FarmerReviewsSection() {
   }
 
   return (
-    <Box component="section" sx={{ py: { xs: 7, md: 10 }, bgcolor: "background.default" }}>
+    <Box
+      component="section"
+      sx={{ py: { xs: 8, md: 11 }, background: "linear-gradient(180deg, #354F38 0%, #1B3321 100%)" }}
+    >
       <Container maxWidth="lg">
-        <SectionTitle
-          overline="WHAT FARMERS SAY"
-          title="Real reviews from our farmers"
-          subtitle="Every review is checked by our team before it is published."
-        />
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" }, gap: 3 }}>
+        <Box sx={{ textAlign: "center", maxWidth: 720, mx: "auto", mb: 6 }}>
+          <Typography sx={{ color: LIME, fontWeight: 800, letterSpacing: 4, fontSize: 13 }}>WHAT FARMERS SAY</Typography>
+          <Typography component="h2" sx={{ color: "#fff", fontWeight: 900, fontSize: { xs: 30, md: 42 }, mt: 1.5 }}>
+            Real reviews from{" "}
+            <Box component="span" sx={{ color: LIME, fontStyle: "italic", fontWeight: 400 }}>
+              our farmers
+            </Box>
+          </Typography>
+          <Typography sx={{ color: "rgba(255,255,255,0.75)", mt: 1.5, fontSize: 17 }}>
+            Every review is checked by our team before it is published.
+          </Typography>
+        </Box>
+
+        <Box sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 3 }}>
           {reviews.map((review) => (
-            <Card key={review.id} elevation={0} sx={{ border: 1, borderColor: "divider", borderRadius: 4, height: "100%" }}>
-              <CardContent sx={{ p: 3, height: "100%", display: "flex", flexDirection: "column", gap: 2 }}>
-                <FormatQuoteRoundedIcon sx={{ fontSize: 40, color: "primary.main", opacity: 0.4 }} />
-                <Typography sx={{ lineHeight: 1.8, flex: 1 }}>{review.comment}</Typography>
-                <Rating value={review.rating} readOnly size="small" />
-                <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                  <Avatar sx={{ bgcolor: "primary.main" }}>{review.user_name?.[0]}</Avatar>
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography fontWeight={700} noWrap>
-                      {review.user_name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" noWrap>
-                      {review.crop_name ? `${review.crop_name} grower` : "AL-HASAD GATE member"}
-                    </Typography>
-                  </Box>
-                </Stack>
-                {review.verified_consultation && (
-                  <Chip
-                    icon={<VerifiedOutlinedIcon />}
-                    label="After a consultation"
-                    size="small"
-                    color="success"
-                    variant="outlined"
-                    sx={{ alignSelf: "flex-start" }}
-                  />
-                )}
-              </CardContent>
-            </Card>
+            <ReviewCard key={review.id} review={review} />
           ))}
         </Box>
-        <Box sx={{ textAlign: "center", mt: 5 }}>
-          <Button component={Link} to="/crop-guide" variant="outlined" size="large">
+
+        <Box sx={{ textAlign: "center", mt: 6 }}>
+          <Button
+            component={Link}
+            to="/crop-guide"
+            variant="contained"
+            size="large"
+            sx={{ bgcolor: LIME, color: "#183D2A", fontWeight: 800, borderRadius: 50, px: 4, "&:hover": { bgcolor: "#E8FF91" } }}
+          >
             See reviews in the crop guide
           </Button>
         </Box>
