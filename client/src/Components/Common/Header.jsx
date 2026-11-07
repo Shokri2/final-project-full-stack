@@ -24,8 +24,7 @@ const pages = [
   { title: "Home", path: "/" },
   { title: "About", path: "/about" },
   { title: "Crop Guide", path: "/crop-guide" },
-  { title: "Reviews", path: "/feedback" },
-  { title: "Contact", path: "/contact" },
+  { title: "Smart Farming", path: "/smart-farming" },
 ];
 
 const lightButton = {

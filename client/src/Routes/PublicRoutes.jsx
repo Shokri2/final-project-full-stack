@@ -8,7 +8,8 @@ import CropDetails from "../Pages/CropDetails/CropDetails.jsx";
 import Register from "../Components/Auth/Register.jsx";
 import Login from "../Components/Auth/Login.jsx";
 import PublicLayout from "../Components/Layouts/PublicLayout.jsx";
-import UnderConstruction from "../Pages/UnderConstruction/UnderConstruction.jsx";
+import SmartFarming from "../Pages/SmartFarming/SmartFarming.jsx";
+import Contact from "../Pages/Contact/Contact.jsx";
 import GuestRoute from "./GuestRoute.jsx";
 import VerifyEmail from "../Pages/VerifyEmail/VerifyEmail.jsx";
 
@@ -23,8 +24,8 @@ export const publicRoutes = (
       <Route path="/services" element={<Services />} />
       <Route path="/crop-guide" element={<CropGuide />} />
       <Route path="/crops/:id" element={<CropDetails />} />
-      <Route path="/feedback" element={<UnderConstruction title="Reviews" />} />
-      <Route path="/contact" element={<UnderConstruction title="Contact Us" />} />
+      <Route path="/smart-farming" element={<SmartFarming />} />
+      <Route path="/contact" element={<Contact />} />
     </Route>
 
     <Route element={<GuestRoute />}>

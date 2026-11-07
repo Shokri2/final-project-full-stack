@@ -4,7 +4,7 @@ import CropDetailsContent from "../../Components/Crops/CropDetailsContent";
 function UserCropDetails() {
   const { id } = useParams();
 
-  return <CropDetailsContent cropId={id} backTo="/user/crops" />;
+  return <CropDetailsContent cropId={id} backTo="/user/crops" inDashboard />;
 }
 
 export default UserCropDetails;

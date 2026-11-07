@@ -162,10 +162,23 @@ export default function Footer() {
                     About Us
                   </Link>
 
-                  <Link component={RouterLink} to="/services" sx={linkStyle}>
-                    Our Services
+                  <Link component={RouterLink} to="/crop-guide" sx={linkStyle}>
+                    Crop Guide
                   </Link>
 
+                  <Link component={RouterLink} to="/smart-farming" sx={linkStyle}>
+                    Smart Farming
+                  </Link>
+
+                  <Link component={RouterLink} to="/contact" sx={linkStyle}>
+                    Contact Us
+                  </Link>
+                </Stack>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Typography sx={headingStyle}>Account</Typography>
+
+                <Stack spacing={1.5}>
                   <Link component={RouterLink} to="/login" sx={linkStyle}>
                     Login
                   </Link>
@@ -173,19 +186,10 @@ export default function Footer() {
                   <Link component={RouterLink} to="/register" sx={linkStyle}>
                     Create Account
                   </Link>
-                </Stack>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <Typography sx={headingStyle}>Our Services</Typography>
 
-                <Stack spacing={1.5}>
-                  <Typography sx={linkStyle}>Plant Management</Typography>
-
-                  <Typography sx={linkStyle}>Smart Irrigation</Typography>
-
-                  <Typography sx={linkStyle}>Crop Monitoring</Typography>
-
-                  <Typography sx={linkStyle}>Agricultural Robot</Typography>
+                  <Link component={RouterLink} to="/verify-email" sx={linkStyle}>
+                    Verify Email
+                  </Link>
                 </Stack>
               </Grid>
 
@@ -214,6 +218,10 @@ export default function Footer() {
                       Jordan
                     </Typography>
                   </Stack>
+
+                  <Link component={RouterLink} to="/contact" sx={{ ...linkStyle, color: "#D9F36A", fontWeight: 700 }}>
+                    Send us a message →
+                  </Link>
                 </Stack>
               </Grid>
             </Grid>

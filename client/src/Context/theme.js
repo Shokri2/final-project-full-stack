@@ -71,3 +71,5 @@ export const buildTheme = (mode) =>
   });
 
 export const lightTheme = buildTheme("light");
+
+export const darkTheme = buildTheme("dark");
