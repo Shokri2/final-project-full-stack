@@ -8,6 +8,8 @@ import categoryRoutes from "./src/routes/category.routes.js";
 import userRoutes from "./src/routes/user.Routes.js";
 import cropsRoutes from "./src/routes/crops.Routes.js";
 import activityRoutes from "./src/routes/activity.Routes.js";
+import requestRoutes from "./src/routes/request.Routes.js";
+import { UPLOADS_ROOT } from "./src/utils/fileStorage.js";
 import { apiLimiter } from "./src/middleware/rateLimit.Middleware.js";
 import { getAllowedOrigins } from "./src/middleware/csrf.Middleware.js";
 import {
@@ -40,6 +42,12 @@ app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: true, limit: "100kb" }));
 app.use(cookieParser());
 
+app.use(
+  "/uploads",
+  helmet.crossOriginResourcePolicy({ policy: "cross-origin" }),
+  express.static(UPLOADS_ROOT, { dotfiles: "deny", index: false }),
+);
+
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
@@ -50,6 +58,7 @@ app.use("/api", categoryRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/crops", cropsRoutes);
 app.use("/api/activities", activityRoutes);
+app.use("/api/requests", requestRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

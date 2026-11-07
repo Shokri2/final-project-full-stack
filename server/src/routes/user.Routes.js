@@ -1,15 +1,17 @@
 import express from "express";
 import {
-  getUsers,
   getUser,
+  updateUserController,
+  changePasswordController,
+} from "../controller/user.Controller.js";
+import {
+  getUsers,
   createUserController,
   deleteUser,
-  updateUserController,
   updateUserStatusController,
   updateUserRoleController,
   updateSpecialtiesController,
-  changePasswordController,
-} from "../controller/user.Controller.js";
+} from "../controller/userAdmin.Controller.js";
 import { authenticate } from "../middleware/authenticate.Middleware.js";
 import { authorize } from "../middleware/authorize.Middleware.js";
 import { validate } from "../middleware/validate.Middleware.js";
