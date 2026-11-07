@@ -1,22 +1,7 @@
-/**
- * Links crops to categories and tidies the catalog tables.
- *
- *  categories 1 ──< crops 1 ──< crop_growth_stages
- *
- *  - crops.category_id (NOT NULL, RESTRICT: a category that still has crops cannot be deleted).
- *    Existing crops without a category are put in a "General" category, which the seed later
- *    replaces with the real category of each crop.
- *  - crops.is_active: crops that have consultation requests are deactivated, not deleted.
- *  - crops.created_by / updated_by, unique crop names, search/filter indexes, timestamptz.
- *
- * @param {import('node-pg-migrate').MigrationBuilder} pgm
- */
 export const up = (pgm) => {
-  // ---- categories ----
   pgm.alterColumn("categories", "description", { type: "varchar(500)" });
   pgm.alterColumn("categories", "image", { type: "varchar(500)" });
 
-  // ---- crops: new columns ----
   pgm.addColumns("crops", {
     category_id: { type: "integer", references: "categories", onDelete: "RESTRICT" },
     is_active: { type: "boolean", notNull: true, default: true },
@@ -24,7 +9,6 @@ export const up = (pgm) => {
     updated_by: { type: "integer", references: "users", onDelete: "SET NULL" },
   });
 
-  // Backfill: only runs when crops without a category exist (i.e. the old local database).
   pgm.sql(`
     DO $$
     DECLARE
@@ -50,14 +34,11 @@ export const up = (pgm) => {
   pgm.createIndex("crops", "is_active");
   pgm.createIndex("crops", [{ name: "LOWER(name)" }], { name: "crops_name_lower_idx" });
 
-  // ---- crop_growth_stages ----
   pgm.addConstraint("crop_growth_stages", "valid_stage_order", {
     check: "stage_order > 0",
   });
-  // unique_crop_stage_order (crop_id, stage_order) already indexes crop_id first.
   pgm.dropIndex("crop_growth_stages", "crop_id", { name: "idx_crop_growth_stages_crop_id" });
 
-  // ---- timestamps + triggers ----
   for (const table of ["categories", "crops"]) {
     pgm.sql(`
       UPDATE ${table} SET created_at = NOW() WHERE created_at IS NULL;
@@ -75,7 +56,6 @@ export const up = (pgm) => {
   }
 };
 
-/** @param {import('node-pg-migrate').MigrationBuilder} pgm */
 export const down = (pgm) => {
   for (const table of ["categories", "crops"]) {
     pgm.sql(`

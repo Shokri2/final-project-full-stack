@@ -1,10 +1,3 @@
-/**
- * The final project focuses on crops + consultation requests, so the unused
- * midterm `products` and `orders` tables are removed.
- * Safety: the migration stops if either table still contains data.
- *
- * @param {import('node-pg-migrate').MigrationBuilder} pgm
- */
 export const up = (pgm) => {
   pgm.sql(`
     DO $$
@@ -18,7 +11,6 @@ export const up = (pgm) => {
   pgm.dropTable("products");
 };
 
-/** Recreates both tables exactly as they were in the baseline. */
 export const down = (pgm) => {
   pgm.sql(`
     CREATE TABLE products (

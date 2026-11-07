@@ -1,39 +1,72 @@
-import { createUser, findUserByEmail } from "../model/auth.Model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { generateAcessTokens, generateRefreshTokens } from "../utils/token.js";
-
+import { pool } from "../config/db.js";
+import {
+  createUser,
+  findUserByEmail,
+  findCurrentUserById,
+  markEmailAsVerified,
+  updateLastLogin,
+} from "../model/auth.Model.js";
 import {
   createRefreshTokenSession,
   findRefreshTokenSession,
   rotateRefreshTokenSession,
   revokeRefreshTokenSession,
 } from "../model/refreshToken.Model.js";
+import {
+  createEmailVerificationToken,
+  useEmailVerificationToken,
+} from "../model/emailVerification.Model.js";
+import {
+  generateAcessTokens,
+  generateRefreshTokens,
+  generateRandomToken,
+} from "../utils/token.js";
+import {
+  setRefreshTokenCookie,
+  clearRefreshTokenCookie,
+} from "../utils/cookies.js";
+import { sendVerificationEmail } from "../utils/email.js";
+import { logActivity } from "../utils/activityLog.js";
 
-// ------------------- Register -------------------
-export const createUserController = async (req, res) => {
+const EMAIL_VERIFICATION_TTL = 24 * 60 * 60 * 1000;
+
+const toSafeUser = (user) => {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    role: user.role,
+    avatar: user.avatar,
+    is_active: user.is_active,
+    email_verified: Boolean(user.email_verified_at ?? user.email_verified),
+  };
+};
+
+const issueVerificationEmail = async (user, client = pool) => {
+  const token = generateRandomToken();
+
+  await createEmailVerificationToken(
+    {
+      userId: user.id,
+      token,
+      expiresAt: new Date(Date.now() + EMAIL_VERIFICATION_TTL),
+    },
+    client,
+  );
+
+  return token;
+};
+
+export const createUserController = async (req, res, next) => {
+  const { name, email, phone, password, avatar } = req.body;
+
+  const client = await pool.connect();
+
   try {
-    const { name, email, password, avatar } = req.body;
-
-    if (
-      typeof name !== "string" ||
-      !name.trim() ||
-      typeof email !== "string" ||
-      !email.trim() ||
-      typeof password !== "string" ||
-      !password
-    ) {
-      return res.status(400).json({
-        message: "Name, email, and password are required.",
-      });
-    }
-
-    const normalizedName = name.trim();
-    const normalizedEmail = email.trim().toLowerCase();
-
-    const existingUsers = await findUserByEmail({
-      email: normalizedEmail,
-    });
+    const existingUsers = await findUserByEmail({ email });
 
     if (existingUsers.length > 0) {
       return res.status(409).json({
@@ -43,60 +76,132 @@ export const createUserController = async (req, res) => {
 
     const hashed_password = await bcrypt.hash(password, 12);
 
-    const newUser = await createUser({
-      name: normalizedName,
-      email: normalizedEmail,
-      hashed_password,
-      role: "user",
-      avatar: avatar || null,
-    });
+    await client.query("BEGIN");
 
-    if (!newUser) {
-      return res.status(500).json({
-        message: "Something went wrong while creating the account.",
+    const newUser = await createUser(
+      {
+        name,
+        email,
+        phone: phone || null,
+        hashed_password,
+        avatar: avatar || null,
+      },
+      client,
+    );
+
+    const verificationToken = await issueVerificationEmail(newUser, client);
+
+    await logActivity(
+      {
+        userId: newUser.id,
+        action: "USER_REGISTERED",
+        entityType: "user",
+        entityId: newUser.id,
+        ip: req.ip,
+      },
+      client,
+    );
+
+    await client.query("COMMIT");
+
+    try {
+      await sendVerificationEmail({
+        to: newUser.email,
+        name: newUser.name,
+        token: verificationToken,
       });
+    } catch (emailError) {
+      console.error("VERIFICATION EMAIL ERROR:", emailError.message);
     }
 
-    const {
-      hashed_password: _passwordHash,
-      password: _password,
-      ...safeUser
-    } = newUser;
-
     return res.status(201).json({
-      message: "Account created successfully.",
-      user: safeUser,
+      message:
+        "Account created successfully. Please check your email to verify your account.",
+      user: toSafeUser(newUser),
     });
   } catch (error) {
-    console.error("REGISTER ERROR:", error);
-
-    return res.status(500).json({
-      message: "Internal server error.",
-    });
+    await client.query("ROLLBACK").catch(() => {});
+    return next(error);
+  } finally {
+    client.release();
   }
 };
 
-// ------------------- Login -------------------
-export const loginController = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+export const verifyEmailController = async (req, res, next) => {
+  const { token } = req.body;
 
-    if (
-      typeof email !== "string" ||
-      typeof password !== "string" ||
-      !email.trim() ||
-      !password
-    ) {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const usedToken = await useEmailVerificationToken(token, client);
+
+    if (!usedToken) {
+      await client.query("ROLLBACK");
+
       return res.status(400).json({
-        message: "Email and password are required.",
+        message: "Verification link is invalid or has expired.",
       });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    await markEmailAsVerified(usedToken.user_id, client);
 
-    const existingUsers = await findUserByEmail({
-      email: normalizedEmail,
+    await logActivity(
+      {
+        userId: usedToken.user_id,
+        action: "EMAIL_VERIFIED",
+        entityType: "user",
+        entityId: usedToken.user_id,
+        ip: req.ip,
+      },
+      client,
+    );
+
+    await client.query("COMMIT");
+
+    return res.status(200).json({
+      message: "Email verified successfully. You can now log in.",
     });
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    return next(error);
+  } finally {
+    client.release();
+  }
+};
+
+export const resendVerificationController = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    const existingUsers = await findUserByEmail({ email });
+    const user = existingUsers[0];
+
+    if (user && user.is_active && !user.email_verified_at) {
+      const token = await issueVerificationEmail(user);
+
+      await sendVerificationEmail({
+        to: user.email,
+        name: user.name,
+        token,
+      });
+    }
+
+    return res.status(200).json({
+      message:
+        "If this email is registered and not verified yet, a new verification link has been sent.",
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const loginController = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    const existingUsers = await findUserByEmail({ email });
 
     if (existingUsers.length === 0) {
       return res.status(401).json({
@@ -114,58 +219,52 @@ export const loginController = async (req, res) => {
       });
     }
 
-    if (userRecord.status !== "approved") {
+    if (!userRecord.is_active) {
       return res.status(403).json({
-        message: "This account is not approved.",
+        message: "This account has been deactivated. Please contact support.",
+        code: "ACCOUNT_DEACTIVATED",
+      });
+    }
+
+    if (!userRecord.email_verified_at) {
+      return res.status(403).json({
+        message: "Please verify your email before logging in.",
+        code: "EMAIL_NOT_VERIFIED",
       });
     }
 
     const accessTokens = generateAcessTokens(userRecord);
     const refreshTokens = generateRefreshTokens(userRecord);
 
-    const refreshTokenExpiresAt = new Date(
-      Date.now() + 7 * 24 * 60 * 60 * 1000,
-    );
-
     await createRefreshTokenSession({
       userId: userRecord.id,
       refreshToken: refreshTokens,
-      expiresAt: refreshTokenExpiresAt,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
-    res.cookie("refreshTokens", refreshTokens, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/api/auth",
+    await updateLastLogin(userRecord.id);
+
+    await logActivity({
+      userId: userRecord.id,
+      action: "USER_LOGGED_IN",
+      entityType: "user",
+      entityId: userRecord.id,
+      ip: req.ip,
     });
 
-    const safeUser = {
-      id: userRecord.id,
-      name: userRecord.name,
-      role: userRecord.role,
-      status: userRecord.status,
-      avatar: userRecord.avatar,
-      email: userRecord.email,
-    };
+    setRefreshTokenCookie(res, refreshTokens);
 
     return res.status(200).json({
       message: "Login successful.",
-      user: safeUser,
+      user: toSafeUser(userRecord),
       accessTokens,
     });
   } catch (error) {
-    console.error("LOGIN ERROR:", error);
-
-    return res.status(500).json({
-      message: "Internal server error.",
-    });
+    return next(error);
   }
 };
 
-// ------------------- Refresh Access Token -------------------
-export const refreshTokenController = async (req, res) => {
+export const refreshTokenController = async (req, res, next) => {
   try {
     const refreshToken = req.cookies?.refreshTokens;
 
@@ -183,12 +282,7 @@ export const refreshTokenController = async (req, res) => {
         audience: "my-client",
       });
     } catch {
-      res.clearCookie("refreshTokens", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/api/auth",
-      });
+      clearRefreshTokenCookie(res);
 
       return res.status(401).json({
         message: "Invalid or expired refresh token.",
@@ -201,12 +295,7 @@ export const refreshTokenController = async (req, res) => {
       payload.id === undefined ||
       payload.id === null
     ) {
-      res.clearCookie("refreshTokens", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/api/auth",
-      });
+      clearRefreshTokenCookie(res);
 
       return res.status(401).json({
         message: "Invalid refresh token.",
@@ -216,28 +305,19 @@ export const refreshTokenController = async (req, res) => {
     const session = await findRefreshTokenSession(refreshToken);
 
     if (!session || String(session.user_id) !== String(payload.id)) {
-      res.clearCookie("refreshTokens", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/api/auth",
-      });
+      clearRefreshTokenCookie(res);
 
       return res.status(401).json({
         message: "Refresh token session is invalid or expired.",
       });
     }
 
-    if (session.status !== "approved") {
-      res.clearCookie("refreshTokens", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/api/auth",
-      });
+    if (!session.is_active || !session.email_verified_at) {
+      await revokeRefreshTokenSession(refreshToken);
+      clearRefreshTokenCookie(res);
 
       return res.status(403).json({
-        message: "This account is not approved.",
+        message: "This account is not allowed to log in.",
       });
     }
 
@@ -249,50 +329,32 @@ export const refreshTokenController = async (req, res) => {
     const newAccessToken = generateAcessTokens(user);
     const newRefreshToken = generateRefreshTokens(user);
 
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
     const rotated = await rotateRefreshTokenSession({
       oldRefreshToken: refreshToken,
       newRefreshToken,
-      expiresAt,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
     if (!rotated) {
-      res.clearCookie("refreshTokens", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/api/auth",
-      });
+      clearRefreshTokenCookie(res);
 
       return res.status(401).json({
         message: "Refresh token session is no longer valid.",
       });
     }
 
-    res.cookie("refreshTokens", newRefreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/api/auth",
-    });
+    setRefreshTokenCookie(res, newRefreshToken);
 
     return res.status(200).json({
       message: "Token refreshed successfully.",
       accessTokens: newAccessToken,
     });
   } catch (error) {
-    console.error("REFRESH TOKEN ERROR:", error);
-
-    return res.status(500).json({
-      message: "Internal server error.",
-    });
+    return next(error);
   }
 };
 
-// ------------------- Logout -------------------
-export const logoutController = async (req, res) => {
+export const logoutController = async (req, res, next) => {
   try {
     const refreshToken = req.cookies?.refreshTokens;
 
@@ -300,23 +362,31 @@ export const logoutController = async (req, res) => {
       await revokeRefreshTokenSession(refreshToken);
     }
 
-    res.clearCookie("refreshTokens", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/api/auth",
-    });
+    clearRefreshTokenCookie(res);
 
     return res.status(200).json({
       success: true,
       message: "Logged out successfully.",
     });
   } catch (error) {
-    console.error("LOGOUT ERROR:", error);
+    return next(error);
+  }
+};
 
-    return res.status(500).json({
-      success: false,
-      message: "Failed to log out.",
+export const getCurrentUserController = async (req, res, next) => {
+  try {
+    const user = await findCurrentUserById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found.",
+      });
+    }
+
+    return res.status(200).json({
+      user,
     });
+  } catch (error) {
+    return next(error);
   }
 };

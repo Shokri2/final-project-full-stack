@@ -1,15 +1,9 @@
-/**
- * activity_logs: audit trail shown on the dashboards ("recent activity").
- * contact_messages: submissions from the public Contact page, managed by the admin.
- *
- * @param {import('node-pg-migrate').MigrationBuilder} pgm
- */
 export const up = (pgm) => {
   pgm.createTable("activity_logs", {
     id: { type: "bigserial", primaryKey: true },
     user_id: { type: "integer", references: "users", onDelete: "SET NULL" },
-    action: { type: "varchar(50)", notNull: true }, // e.g. REQUEST_CREATED, USER_ROLE_CHANGED
-    entity_type: { type: "varchar(50)" }, // e.g. request, crop, user, feedback
+    action: { type: "varchar(50)", notNull: true },
+    entity_type: { type: "varchar(50)" },
     entity_id: { type: "integer" },
     details: { type: "jsonb" },
     ip_address: { type: "varchar(45)" },
@@ -34,7 +28,6 @@ export const up = (pgm) => {
   pgm.createIndex("contact_messages", ["status", "created_at"]);
 };
 
-/** @param {import('node-pg-migrate').MigrationBuilder} pgm */
 export const down = (pgm) => {
   pgm.dropTable("contact_messages");
   pgm.dropTable("activity_logs");

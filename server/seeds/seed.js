@@ -1,13 +1,3 @@
-// Seeds test data WITHOUT deleting anything already in the database.
-//
-//  - users, categories, crops, stages, specialties: inserted only if missing (matched by
-//    email / name / crop+order). Existing crops get their real category if they are still
-//    in "General", and an Arabic name if name_ar is just a copy of the English name.
-//  - demo workflow data (requests + history, feedback, activity, contact messages):
-//    inserted only when there are no consultation requests yet.
-//
-// Everything runs in ONE transaction: if any statement fails, nothing is written.
-// Usage: npm run db:seed   (safe to run more than once)
 import "dotenv/config";
 import bcrypt from "bcrypt";
 import { pool } from "../src/config/db.js";
@@ -31,7 +21,6 @@ const seed = async () => {
   try {
     await client.query("BEGIN");
 
-    // ---------- users ----------
     const hashed = await bcrypt.hash(password, 12);
     const userIds = {};
     for (const u of users) {
@@ -54,7 +43,6 @@ const seed = async () => {
     }
     const adminId = userIds.admin;
 
-    // ---------- categories ----------
     const categoryIds = {};
     for (const c of categories) {
       const inserted = await client.query(
@@ -66,8 +54,6 @@ const seed = async () => {
       categoryIds[c.name] = await idOf(client, "SELECT id FROM categories WHERE name = $1", [c.name]);
     }
 
-    // ---------- crops ----------
-    // Existing crops keep their data; we only fix a "General" category or a missing Arabic name.
     const cropIds = {};
     for (const c of crops) {
       const { rows } = await client.query(
@@ -100,13 +86,11 @@ const seed = async () => {
       cropIds[c.name] = rows[0].id;
     }
 
-    // Remove the temporary "General" category once nothing uses it.
     await client.query(
       `DELETE FROM categories c WHERE c.name = 'General'
          AND NOT EXISTS (SELECT 1 FROM crops WHERE category_id = c.id)`,
     );
 
-    // ---------- growth stages ----------
     for (const [cropName, stages] of Object.entries(growthStages)) {
       for (const [index, s] of stages.entries()) {
         const inserted = await client.query(
@@ -122,7 +106,6 @@ const seed = async () => {
       }
     }
 
-    // ---------- agronomist specialties (many-to-many) ----------
     for (const u of users.filter((x) => x.specialties)) {
       for (const categoryName of u.specialties) {
         await client.query(
@@ -133,7 +116,6 @@ const seed = async () => {
       }
     }
 
-    // ---------- demo workflow data (only once) ----------
     const { rows: existing } = await client.query("SELECT COUNT(*)::int AS n FROM consultation_requests");
     if (existing[0].n === 0) {
       await seedWorkflow(client, { userIds, cropIds });
@@ -152,8 +134,6 @@ const seed = async () => {
   }
 };
 
-// Requests walk through their status steps exactly like the API will:
-// every change updates the request AND writes request_status_history + activity_logs.
 const seedWorkflow = async (client, { userIds, cropIds }) => {
   const log = (userId, action, entityType, entityId, details, at) =>
     client.query(

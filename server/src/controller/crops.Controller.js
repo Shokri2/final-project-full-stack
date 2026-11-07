@@ -9,6 +9,8 @@ import {
 const validId = (id) => /^\d+$/.test(id) && Number(id) > 0;
 
 const allowedFields = [
+  "category_id",
+  "is_active",
   "name",
   "name_ar",
   "image",
@@ -22,6 +24,7 @@ const allowedFields = [
 ];
 
 const numericFields = [
+  "category_id",
   "temperature_min",
   "temperature_max",
   "growth_duration_days",
@@ -34,6 +37,14 @@ const validateCropBody = (body, isCreate = false) => {
 
   if (isCreate && (!body.name?.trim() || !body.name_ar?.trim())) {
     return "English and Arabic crop names are required.";
+  }
+
+  if (isCreate && !body.category_id) {
+    return "category_id is required.";
+  }
+
+  if (body.is_active !== undefined && typeof body.is_active !== "boolean") {
+    return "is_active must be true or false.";
   }
 
   for (const field of ["name", "name_ar"]) {
@@ -67,6 +78,7 @@ const validateCropBody = (body, isCreate = false) => {
       body[field] !== undefined &&
       body[field] !== null &&
       !numericFields.includes(field) &&
+      field !== "is_active" &&
       typeof body[field] !== "string"
     ) {
       return `${field} must be a string or null.`;
@@ -84,7 +96,7 @@ const validateCropBody = (body, isCreate = false) => {
   return null;
 };
 
-export const getCrops = async (req, res) => {
+export const getCrops = async (req, res, next) => {
   try {
     const crops = await getAllCrops();
 
@@ -94,16 +106,11 @@ export const getCrops = async (req, res) => {
       data: crops,
     });
   } catch (error) {
-    console.error("GET CROPS ERROR:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to retrieve crops.",
-    });
+    return next(error);
   }
 };
 
-export const getCropDetails = async (req, res) => {
+export const getCropDetails = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -128,16 +135,11 @@ export const getCropDetails = async (req, res) => {
       data: crop,
     });
   } catch (error) {
-    console.error("GET CROP DETAILS ERROR:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to retrieve crop details.",
-    });
+    return next(error);
   }
 };
 
-export const createCrop = async (req, res) => {
+export const createCrop = async (req, res, next) => {
   try {
     const errorMessage = validateCropBody(req.body, true);
 
@@ -160,16 +162,11 @@ export const createCrop = async (req, res) => {
       data: crop,
     });
   } catch (error) {
-    console.error("CREATE CROP ERROR:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to create crop.",
-    });
+    return next(error);
   }
 };
 
-export const updateCrop = async (req, res) => {
+export const updateCrop = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -217,16 +214,11 @@ export const updateCrop = async (req, res) => {
       data: crop,
     });
   } catch (error) {
-    console.error("UPDATE CROP ERROR:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to update crop.",
-    });
+    return next(error);
   }
 };
 
-export const deleteCrop = async (req, res) => {
+export const deleteCrop = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -251,11 +243,6 @@ export const deleteCrop = async (req, res) => {
       message: "Crop deleted successfully.",
     });
   } catch (error) {
-    console.error("DELETE CROP ERROR:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to delete crop.",
-    });
+    return next(error);
   }
 };

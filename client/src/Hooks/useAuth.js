@@ -37,7 +37,7 @@ export const useAuth = () => {
       setCurrentUser(user);
 
       toast.success(
-        res.data.message || res.data.meesage || "Login successful!",
+        res.data.message || "Login successful!",
       );
 
       if (user.role === "admin") {
@@ -74,7 +74,7 @@ export const useAuth = () => {
       const res = await api.post("/auth/register", userData);
 
       toast.success(
-        res.data.message || res.data.meesage || "Registration successful!",
+        res.data.message || "Registration successful!",
       );
 
       navigate("/login");
@@ -98,11 +98,17 @@ export const useAuth = () => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("accessToken");
-    setCurrentUser(null);
-    toast.success("Logged out successfully.");
-    navigate("/");
+  const logout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch {
+      toast.error("Could not reach the server, you have been logged out locally.");
+    } finally {
+      localStorage.removeItem("accessToken");
+      setCurrentUser(null);
+      toast.success("Logged out successfully.");
+      navigate("/");
+    }
   };
 
   return {

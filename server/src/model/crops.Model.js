@@ -2,6 +2,7 @@ import { pool } from "../config/db.js";
 
 const cropFields = `
   id,
+  category_id,
   name,
   name_ar,
   image,
@@ -12,6 +13,7 @@ const cropFields = `
   sunlight,
   soil_type,
   growth_duration_days,
+  is_active,
   created_at,
   updated_at
 `;
@@ -52,6 +54,7 @@ export const getCropById = async (id) => {
 
 export const createCrop = async (crop) => {
   const {
+    category_id,
     name,
     name_ar,
     image = null,
@@ -66,13 +69,14 @@ export const createCrop = async (crop) => {
 
   const result = await pool.query(
     `INSERT INTO crops (
-      name, name_ar, image, description, water_needs,
+      category_id, name, name_ar, image, description, water_needs,
       temperature_min, temperature_max, sunlight,
       soil_type, growth_duration_days
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
     RETURNING ${cropFields};`,
     [
+      category_id,
       name,
       name_ar,
       image,
@@ -91,6 +95,8 @@ export const createCrop = async (crop) => {
 
 export const updateCrop = async (id, crop) => {
   const allowedFields = [
+    "category_id",
+    "is_active",
     "name",
     "name_ar",
     "image",

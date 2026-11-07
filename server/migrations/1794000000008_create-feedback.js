@@ -1,9 +1,3 @@
-/**
- * Feedback / reviews. Pending by default; only approved rows are public.
- * A review can be about a crop guide, about a finished consultation, or both.
- *
- * @param {import('node-pg-migrate').MigrationBuilder} pgm
- */
 export const up = (pgm) => {
   pgm.createTable("feedback", {
     id: "id",
@@ -14,7 +8,6 @@ export const up = (pgm) => {
       onDelete: "CASCADE",
     },
     crop_id: { type: "integer", references: "crops", onDelete: "CASCADE" },
-    // One review per consultation request.
     request_id: {
       type: "integer",
       references: "consultation_requests",
@@ -37,7 +30,6 @@ export const up = (pgm) => {
   pgm.addConstraint("feedback", "feedback_status_check", {
     check: "status IN ('pending', 'approved', 'rejected')",
   });
-  // A user can never be recorded as the reviewer of their own feedback.
   pgm.addConstraint("feedback", "feedback_not_self_reviewed_check", {
     check: "reviewed_by IS NULL OR reviewed_by <> user_id",
   });
@@ -53,7 +45,6 @@ export const up = (pgm) => {
   `);
 };
 
-/** @param {import('node-pg-migrate').MigrationBuilder} pgm */
 export const down = (pgm) => {
   pgm.dropTable("feedback");
 };

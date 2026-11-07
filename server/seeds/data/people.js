@@ -1,6 +1,3 @@
-// Test accounts. All share the password from SEED_PASSWORD (see .env.example).
-// `specialties` lists category names (agronomist_specialties many-to-many).
-
 export const users = [
   { key: "admin", name: "System Admin", email: "admin@alhasad.test", role: "admin", phone: "0590000001" },
   {
@@ -22,14 +19,10 @@ export const users = [
   { key: "farmer1", name: "Ahmad Khalil", email: "ahmad.farmer@alhasad.test", role: "user", phone: "0590000004" },
   { key: "farmer2", name: "Sara Nasser", email: "sara.farmer@alhasad.test", role: "user", phone: "0590000005" },
   { key: "farmer3", name: "Yousef Odeh", email: "yousef.farmer@alhasad.test", role: "user", phone: "0590000006" },
-  // Registered but never verified their email -> cannot log in yet.
   { key: "unverified", name: "Nour Jaber", email: "nour.unverified@alhasad.test", role: "user", verified: false },
-  // Deactivated by the admin -> cannot log in.
   { key: "inactive", name: "Khaled Amin", email: "khaled.inactive@alhasad.test", role: "user", active: false },
 ];
 
-// Each request walks through `steps` (status transitions after creation).
-// The seed writes every step to request_status_history, like the real API will.
 export const requests = [
   {
     user: "farmer1",
