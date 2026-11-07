@@ -10,7 +10,8 @@ export const useAsyncAction = () => {
 
     try {
       const response = await action();
-      const message = typeof success === "function" ? success(response) : success ?? response?.data?.message;
+      const message =
+        success === false ? null : typeof success === "function" ? success(response) : success ?? response?.data?.message;
 
       if (message) {
         toast.success(message);
