@@ -217,12 +217,7 @@ export default function Footer() {
                     <Typography sx={{ color: "#D1DED5", fontSize: 14 }}>
                       Jordan
                     </Typography>
-                  </Stack>
-
-                  <Link component={RouterLink} to="/contact" sx={{ ...linkStyle, color: "#D9F36A", fontWeight: 700 }}>
-                    Send us a message →
-                  </Link>
-                </Stack>
+                  </Stack>                </Stack>
               </Grid>
             </Grid>
           </Grid>
