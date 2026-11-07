@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { Alert, Button, Grid, Paper, Stack, Typography } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ManageAccountsOutlinedIcon from "@mui/icons-material/ManageAccountsOutlined";
 import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOutlined";
 import BlockOutlinedIcon from "@mui/icons-material/BlockOutlined";
@@ -12,11 +13,12 @@ import ErrorState from "../../Components/Common/ErrorState";
 import ConfirmDialog from "../../Components/Common/ConfirmDialog";
 import UserProfileCard from "../../Components/Admin/Users/UserProfileCard";
 import RoleDialog from "../../Components/Admin/Users/RoleDialog";
+import EditUserDialog from "../../Components/Admin/Users/EditUserDialog";
 import { useFetch } from "../../Hooks/useFetch";
 import { useAsyncAction } from "../../Hooks/useAsyncAction";
 import { useCategoryOptions } from "../../Hooks/useCategoryOptions";
 import { useAuthContext } from "../../Context/AuthContext";
-import { deleteUser, getUser, updateSpecialties, updateUserRole, updateUserStatus } from "../../api/usersApi";
+import { deleteUser, getUser, updateSpecialties, updateUser, updateUserRole, updateUserStatus } from "../../api/usersApi";
 
 function ActionRow({ title, description, children }) {
   return (
@@ -73,6 +75,15 @@ function UserDetails() {
       { onSuccess: apply },
     );
 
+  const saveDetails = (changes) => {
+    if (Object.keys(changes).length === 0) {
+      setDialog(null);
+      return undefined;
+    }
+
+    return run(() => updateUser(user.id, changes), { onSuccess: apply });
+  };
+
   const toggleStatus = () => run(() => updateUserStatus(user.id, !user.is_active), { onSuccess: apply });
 
   const remove = () => run(() => deleteUser(user.id), { onSuccess: () => navigate("/admin/users", { replace: true }) });
@@ -93,6 +104,11 @@ function UserDetails() {
         </Grid>
         <Grid size={{ xs: 12, md: 7, lg: 8 }}>
           <Paper elevation={0} sx={{ px: 3, py: 1, border: 1, borderColor: "divider", borderRadius: 3 }}>
+            <ActionRow title="Personal details" description="Update the user’s name and phone number. Email cannot be changed.">
+              <Button variant="outlined" startIcon={<EditOutlinedIcon />} onClick={() => setDialog("edit")}>
+                Edit details
+              </Button>
+            </ActionRow>
             <ActionRow title="Role" description="Farmers submit requests, agronomists answer them, admins manage everything.">
               <Button variant="outlined" startIcon={<ManageAccountsOutlinedIcon />} disabled={isSelf} onClick={() => setDialog("role")}>
                 Change role
@@ -132,6 +148,13 @@ function UserDetails() {
         </Grid>
       </Grid>
 
+      <EditUserDialog
+        open={dialog === "edit"}
+        user={user}
+        loading={pending}
+        onSubmit={saveDetails}
+        onClose={() => setDialog(null)}
+      />
       <RoleDialog
         open={dialog === "role" || dialog === "specialties"}
         user={user}
