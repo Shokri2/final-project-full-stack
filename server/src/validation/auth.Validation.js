@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-const passwordRule = Joi.string()
+export const passwordRule = Joi.string()
   .min(8)
   .max(100)
   .pattern(/^(?=.*[A-Za-z])(?=.*\d).+$/)
@@ -14,7 +14,7 @@ const passwordRule = Joi.string()
     "any.required": "Password is required.",
   });
 
-const emailRule = Joi.string()
+export const emailRule = Joi.string()
   .trim()
   .lowercase()
   .email({ tlds: { allow: false } })

@@ -3,26 +3,30 @@ import {
   getAllCategories,
   getCategoryByName,
   getCategoryById,
+  getCategoryDetails,
   deleteCategory,
   updateCategory,
 } from "../model/categories.Model.js";
+import { logActivity } from "../utils/activityLog.js";
+import { buildPagination } from "../utils/pagination.js";
 
 export const createCategoriesController = async (req, res, next) => {
   try {
-    const { name, description } = req.body;
+    const { name, description, image } = req.body;
     const created_by = req.user.id;
 
     const categories = await getCategoryByName(name);
 
     if (categories.length !== 0) {
-      return res.status(400).json({
+      return res.status(409).json({
         message: "Category name already exists.",
       });
     }
 
     const created = await createCategories({
       name,
-      description,
+      description: description || null,
+      image: image || null,
       created_by,
     });
 
@@ -31,6 +35,15 @@ export const createCategoriesController = async (req, res, next) => {
         message: "Failed to create category.",
       });
     }
+
+    await logActivity({
+      userId: req.user.id,
+      action: "CATEGORY_CREATED",
+      entityType: "category",
+      entityId: created.id,
+      details: { name: created.name },
+      ip: req.ip,
+    });
 
     return res.status(201).json({
       message: "Category created successfully.",
@@ -43,7 +56,7 @@ export const createCategoriesController = async (req, res, next) => {
 
 export const getAllCategoriesController = async (req, res, next) => {
   try {
-    const categories = await getAllCategories();
+    const { categories, total } = await getAllCategories(req.query);
 
     return res.status(200).json({
       message:
@@ -51,6 +64,7 @@ export const getAllCategoriesController = async (req, res, next) => {
           ? "No categories found."
           : "Categories retrieved successfully.",
       categories,
+      pagination: buildPagination(req.query, total),
     });
   } catch (error) {
     return next(error);
@@ -59,19 +73,11 @@ export const getAllCategoriesController = async (req, res, next) => {
 
 export const getCategoryByNameController = async (req, res, next) => {
   try {
-    const name =
-      typeof req.query.name === "string"
-        ? req.query.name.trim()
-        : typeof req.body?.name === "string"
-          ? req.body.name.trim()
-          : "";
+    const name = typeof req.query.name === "string" ? req.query.name.trim() : "";
 
     if (!name) {
-      const categories = await getAllCategories();
-
-      return res.status(200).json({
-        message: "Categories retrieved successfully.",
-        categories,
+      return res.status(400).json({
+        message: "Category name is required.",
       });
     }
 
@@ -92,17 +98,53 @@ export const getCategoryByNameController = async (req, res, next) => {
   }
 };
 
-export const deleteCategoryById = async (req, res, next) => {
+export const getCategoryDetailsController = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const category = await getCategoryDetails(req.params.id);
 
-    const deleted = await deleteCategory(id);
-
-    if (deleted.length === 0) {
+    if (!category) {
       return res.status(404).json({
         message: "Category not found.",
       });
     }
+
+    return res.status(200).json({
+      message: "Category retrieved successfully.",
+      category,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const deleteCategoryById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const details = await getCategoryDetails(id);
+
+    if (!details) {
+      return res.status(404).json({
+        message: "Category not found.",
+      });
+    }
+
+    if (details.crops.length > 0) {
+      return res.status(409).json({
+        message: `This category still has ${details.crops.length} crop(s). Move or delete them first.`,
+      });
+    }
+
+    const deleted = await deleteCategory(id);
+
+    await logActivity({
+      userId: req.user.id,
+      action: "CATEGORY_DELETED",
+      entityType: "category",
+      entityId: Number(id),
+      details: { name: details.name },
+      ip: req.ip,
+    });
 
     return res.status(200).json({
       message: "Category deleted successfully.",
@@ -117,7 +159,7 @@ export const updateCategoryById = async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
-    const { name, description } = req.body;
+    const { name, description, image } = req.body;
 
     const existingCategories = await getCategoryById({ id });
 
@@ -129,13 +171,12 @@ export const updateCategoryById = async (req, res, next) => {
 
     const existingCategory = existingCategories[0];
 
-    const newName =
-      typeof name === "string" && name.trim()
-        ? name.trim()
-        : existingCategory.name;
+    const newName = name ?? existingCategory.name;
 
     const newDescription =
-      description !== undefined ? description : existingCategory.description;
+      description !== undefined ? description || null : existingCategory.description;
+
+    const newImage = image !== undefined ? image || null : existingCategory.image;
 
     const categoriesWithSameName = await getCategoryByName(newName);
 
@@ -144,18 +185,27 @@ export const updateCategoryById = async (req, res, next) => {
     );
 
     if (duplicate) {
-      return res.status(400).json({
+      return res.status(409).json({
         message: "Category name already exists.",
       });
     }
 
-    const updated = await updateCategory(id, userId, newName, newDescription);
+    const updated = await updateCategory(
+      id,
+      userId,
+      newName,
+      newDescription,
+      newImage,
+    );
 
-    if (updated.length === 0) {
-      return res.status(404).json({
-        message: "Category not found.",
-      });
-    }
+    await logActivity({
+      userId: req.user.id,
+      action: "CATEGORY_UPDATED",
+      entityType: "category",
+      entityId: Number(id),
+      details: { name: newName },
+      ip: req.ip,
+    });
 
     return res.status(200).json({
       message: "Category updated successfully.",
