@@ -29,8 +29,8 @@ const createAdmin = async () => {
        SET name = $1,
            hashed_password = $2,
            role = 'admin',
-           status = 'approved',
-           updated_at = CURRENT_TIMESTAMP
+           is_active = TRUE,
+           email_verified_at = COALESCE(email_verified_at, CURRENT_TIMESTAMP)
        WHERE email = $3`,
       [name.trim(), hashed_password, email],
     );
@@ -39,8 +39,8 @@ const createAdmin = async () => {
   } else {
     await pool.query(
       `INSERT INTO users
-         (name, email, hashed_password, role, status)
-       VALUES ($1, $2, $3, 'admin', 'approved')`,
+         (name, email, hashed_password, role, email_verified_at)
+       VALUES ($1, $2, $3, 'admin', CURRENT_TIMESTAMP)`,
       [name.trim(), email, hashed_password],
     );
 

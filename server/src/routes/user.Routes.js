@@ -1,29 +1,106 @@
 import express from "express";
 import {
-  getUsers,
   getUser,
-  deleteUser,
   updateUserController,
-  updateUserStatusController,
+  changePasswordController,
 } from "../controller/user.Controller.js";
-
-import { protect, authorizeRoles } from "../middleware/protect.Middleware.js";
+import {
+  getUsers,
+  createUserController,
+  deleteUser,
+  updateUserStatusController,
+  updateUserRoleController,
+  updateSpecialtiesController,
+} from "../controller/userAdmin.Controller.js";
+import { authenticate } from "../middleware/authenticate.Middleware.js";
+import { authorize } from "../middleware/authorize.Middleware.js";
+import { validate } from "../middleware/validate.Middleware.js";
+import { sensitiveRateLimiter } from "../middleware/authRateLimit.Middleware.js";
+import { changePasswordSchema } from "../validation/auth.Validation.js";
+import {
+  usersQuerySchema,
+  createUserByAdminSchema,
+  updateUserSchema,
+  updateUserStatusSchema,
+  updateUserRoleSchema,
+  updateSpecialtiesSchema,
+  userIdParamSchema,
+} from "../validation/user.Validation.js";
 
 const router = express.Router();
 
-router.get("/Users", protect, authorizeRoles("admin"), getUsers);
+router.get(
+  "/Users",
+  authenticate,
+  authorize("admin"),
+  validate(usersQuerySchema, "query"),
+  getUsers,
+);
 
-router.get("/getUser/:id", protect, getUser);
+router.post(
+  "/createUser",
+  authenticate,
+  authorize("admin"),
+  validate(createUserByAdminSchema),
+  createUserController,
+);
 
-router.put("/updateUser/:id", protect, updateUserController);
+router.get(
+  "/getUser/:id",
+  authenticate,
+  validate(userIdParamSchema, "params"),
+  getUser,
+);
 
-router.delete("/deleteUser/:id", protect, authorizeRoles("admin"), deleteUser);
+router.put(
+  "/updateUser/:id",
+  authenticate,
+  validate(userIdParamSchema, "params"),
+  validate(updateUserSchema),
+  updateUserController,
+);
+
+router.put(
+  "/changePassword",
+  authenticate,
+  sensitiveRateLimiter,
+  validate(changePasswordSchema),
+  changePasswordController,
+);
+
+router.delete(
+  "/deleteUser/:id",
+  authenticate,
+  authorize("admin"),
+  validate(userIdParamSchema, "params"),
+  deleteUser,
+);
 
 router.patch(
   "/updateStatus/:id/status",
-  protect,
-  authorizeRoles("admin"),
+  authenticate,
+  authorize("admin"),
+  validate(userIdParamSchema, "params"),
+  validate(updateUserStatusSchema),
   updateUserStatusController,
+);
+
+router.patch(
+  "/updateRole/:id/role",
+  authenticate,
+  authorize("admin"),
+  validate(userIdParamSchema, "params"),
+  validate(updateUserRoleSchema),
+  updateUserRoleController,
+);
+
+router.put(
+  "/updateSpecialties/:id",
+  authenticate,
+  authorize("admin"),
+  validate(userIdParamSchema, "params"),
+  validate(updateSpecialtiesSchema),
+  updateSpecialtiesController,
 );
 
 export default router;

@@ -2,7 +2,6 @@
   "dependencies": {
     "axios": "^1.20.0",
     "bcrypt": "^6.0.0",
-    "body-parser": "^2.3.0",
     "cookie": "^2.0.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
@@ -12,6 +11,8 @@
     "helmet": "^8.3.0",
     "joi": "^18.2.9",
     "jsonwebtoken": "^9.0.3",
+    "multer": "^2.0.2",
+    "nodemailer": "^7.0.9",
     "pg": "^8.23.0"
   },
   "name": "server",
@@ -19,10 +20,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon index.js",
     "migrate": "node-pg-migrate",
-    "db:seed": "node seeds/seed.js"
+    "migrate:up": "node-pg-migrate up",
+    "migrate:down": "node-pg-migrate down",
+    "db:seed": "node seeds/seed.js",
+    "create:admin": "node src/scripts/createAdmin.js"
   },
   "keywords": [],
   "author": "",

@@ -1,6 +1,6 @@
 export const validate = (schema, property = "body") => {
   return (req, res, next) => {
-    const { error, value } = schema.validate(req[property], {
+    const { error, value } = schema.validate(req[property] ?? {}, {
       abortEarly: false,
       stripUnknown: true,
       convert: true,
@@ -16,7 +16,16 @@ export const validate = (schema, property = "body") => {
       });
     }
 
-    req[property] = value;
+    if (property === "query") {
+      Object.defineProperty(req, "query", {
+        value,
+        writable: true,
+        configurable: true,
+      });
+    } else {
+      req[property] = value;
+    }
+
     return next();
   };
 };

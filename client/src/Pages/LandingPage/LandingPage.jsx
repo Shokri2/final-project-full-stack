@@ -4,6 +4,7 @@ import Home from "../Home/Home";
 import Header from "../../Components/Common/Header";
 import Features from "../Features/Features";
 import FeaturesSection from "../../Components/FeaturesSection/FeaturesSection";
+import FarmerReviewsSection from "../../Components/Home/FarmerReviewsSection";
 
 export default function LandingPage() {
   return (
@@ -21,6 +22,7 @@ export default function LandingPage() {
       <Home />
       <Features />
       <FeaturesSection />
+      <FarmerReviewsSection />
       <Footer />
     </Box>
   );

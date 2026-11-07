@@ -1,35 +1,80 @@
 import connectDB from "./src/config/db.js";
 import express from "express";
 import cors from "cors";
-import authRoutes from "./src/routes/auth.Routes.js";
-import bodyParser from "body-parser";
+import helmet from "helmet";
 import cookieParser from "cookie-parser";
+import authRoutes from "./src/routes/auth.Routes.js";
 import categoryRoutes from "./src/routes/category.routes.js";
-import productRoutes from "./src/routes/products.routes.js";
 import userRoutes from "./src/routes/user.Routes.js";
 import cropsRoutes from "./src/routes/crops.Routes.js";
-connectDB();
+import activityRoutes from "./src/routes/activity.Routes.js";
+import requestRoutes from "./src/routes/request.Routes.js";
+import feedbackRoutes from "./src/routes/feedback.Routes.js";
+import dashboardRoutes from "./src/routes/dashboard.Routes.js";
+import contactRoutes from "./src/routes/contact.Routes.js";
+import { UPLOADS_ROOT } from "./src/utils/fileStorage.js";
+import { apiLimiter } from "./src/middleware/rateLimit.Middleware.js";
+import { getAllowedOrigins } from "./src/middleware/csrf.Middleware.js";
+import {
+  notFoundHandler,
+  errorHandler,
+} from "./src/middleware/error.Middleware.js";
+
 const app = express();
+
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
+app.use(helmet());
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
-    credentials:true
+    origin: (origin, callback) => {
+      if (!origin || getAllowedOrigins().includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(null, false);
+    },
+    credentials: true,
   }),
 );
-app.use(express.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser())
 
+app.use(express.json({ limit: "100kb" }));
+app.use(express.urlencoded({ extended: true, limit: "100kb" }));
+app.use(cookieParser());
+
+app.use(
+  "/uploads",
+  helmet.crossOriginResourcePolicy({ policy: "cross-origin" }),
+  express.static(UPLOADS_ROOT, { dotfiles: "deny", index: false }),
+);
 
 app.get("/health", (req, res) => {
-  res.send("hello");
+  res.status(200).json({ status: "ok" });
 });
 
+app.use("/api", apiLimiter);
 app.use("/api", authRoutes);
 app.use("/api", categoryRoutes);
-app.use("/api", productRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/crops", cropsRoutes);
-app.listen(process.env.PORT, () => {
-  console.log("server is working!", process.env.PORT);
-});
+app.use("/api/activities", activityRoutes);
+app.use("/api/requests", requestRoutes);
+app.use("/api/feedback", feedbackRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/contact", contactRoutes);
+
+app.use(notFoundHandler);
+app.use(errorHandler);
+
+if (process.env.NODE_ENV !== "test") {
+  await connectDB();
+
+  app.listen(process.env.PORT, () => {
+    console.log("server is working!", process.env.PORT);
+  });
+}
+
+export default app;
