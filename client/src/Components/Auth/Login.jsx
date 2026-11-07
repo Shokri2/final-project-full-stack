@@ -1,159 +1,80 @@
-import {
-  Box,
-  Container,
-  Paper,
-  Typography,
-  TextField,
-  Button,
-  Stack,
-} from "@mui/material";
-import { Link, useNavigate } from "react-router-dom";
-import SpaOutlinedIcon from "@mui/icons-material/SpaOutlined";
-import { useState } from "react";
+import { Alert, Link as MuiLink, Stack, Typography } from "@mui/material";
+import { Link, useLocation } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import { useAuth } from "../../Hooks/useAuth";
+import AuthLayout from "./AuthLayout";
+import FormTextField from "../Form/FormTextField";
+import FormPasswordField from "../Form/FormPasswordField";
+import SubmitButton from "../Form/SubmitButton";
+import { emailRules, requiredRule } from "../Form/rules";
+import { applyFieldErrors } from "../../utils/errors";
 
 function Login() {
-  const navigate = useNavigate();
+  const location = useLocation();
   const { login, loading } = useAuth();
 
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
+  const { control, handleSubmit, setError } = useForm({
+    defaultValues: { email: "", password: "" },
+    mode: "onTouched",
   });
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
+  const onSubmit = async (values) => {
+    const result = await login({ email: values.email.trim().toLowerCase(), password: values.password });
 
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    await login(formData);
+    if (result?.error) {
+      applyFieldErrors(result.error, setError);
+    }
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        bgcolor: "#F7FAF5",
-        py: 4,
-      }}
+    <AuthLayout
+      title="Welcome back"
+      subtitle="Sign in to follow your consultations and crops."
+      footer={
+        <Typography color="text.secondary">
+          Don't have an account?{" "}
+          <MuiLink component={Link} to="/register" fontWeight={700} underline="hover">
+            Create account
+          </MuiLink>
+        </Typography>
+      }
     >
-      <Container maxWidth="sm">
-        <Box sx={{ textAlign: "center", mb: 3 }}>
-          <SpaOutlinedIcon sx={{ fontSize: 48, color: "#246B3D" }} />
+      {location.state?.from && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Please log in to continue.
+        </Alert>
+      )}
 
-          <Typography variant="h4" fontWeight={800} color="#183D2A">
-            GreenBot
-          </Typography>
+      <Stack component="form" spacing={1} onSubmit={handleSubmit(onSubmit)} noValidate>
+        <FormTextField
+          name="email"
+          control={control}
+          rules={emailRules}
+          label="Email address"
+          type="email"
+          autoComplete="email"
+          disabled={loading}
+        />
+        <FormPasswordField
+          name="password"
+          control={control}
+          rules={requiredRule("Password")}
+          label="Password"
+          autoComplete="current-password"
+          disabled={loading}
+        />
+        <SubmitButton loading={loading} loadingText="Signing in..." fullWidth sx={{ py: 1.4 }}>
+          Sign in
+        </SubmitButton>
+      </Stack>
 
-          <Typography color="text.secondary" sx={{ mt: 1 }}>
-            Welcome back! Sign in to your account.
-          </Typography>
-        </Box>
-
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 3, sm: 5 },
-            borderRadius: 4,
-            border: "1px solid #E5EDE4",
-          }}
-        >
-          <Typography variant="h5" fontWeight={700} sx={{ mb: 1 }}>
-            Login
-          </Typography>
-
-          <Typography color="text.secondary" sx={{ mb: 3 }}>
-            Enter your details to continue.
-          </Typography>
-
-          <Box component="form" onSubmit={handleSubmit}>
-            <Stack spacing={2.5}>
-              <TextField
-                label="Email Address"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                fullWidth
-                required
-                autoComplete="email"
-                disabled={loading}
-              />
-
-              <TextField
-                label="Password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                fullWidth
-                required
-                autoComplete="current-password"
-                disabled={loading}
-              />
-
-              <Button
-                type="submit"
-                variant="contained"
-                size="large"
-                disabled={loading}
-                sx={{
-                  py: 1.4,
-                  bgcolor: "#246B3D",
-                  borderRadius: 2,
-                  textTransform: "none",
-                  fontWeight: 700,
-                  "&:hover": {
-                    bgcolor: "#194D2C",
-                  },
-                  "&.Mui-disabled": {
-                    bgcolor: "#A5B9A9",
-                    color: "#FFFFFF",
-                  },
-                }}
-              >
-                {loading ? "Signing In..." : "Sign In"}
-              </Button>
-            </Stack>
-          </Box>
-
-          <Typography sx={{ textAlign: "center", mt: 3 }} color="text.secondary">
-            Don't have an account?{" "}
-            <Link
-              to="/register"
-              style={{
-                color: "#246B3D",
-                fontWeight: 700,
-                textDecoration: "none",
-              }}
-            >
-              Create Account
-            </Link>
-          </Typography>
-
-          <Button
-            fullWidth
-            onClick={() => navigate("/")}
-            disabled={loading}
-            sx={{
-              mt: 1,
-              color: "#526357",
-              textTransform: "none",
-            }}
-          >
-            Back to Home
-          </Button>
-        </Paper>
-      </Container>
-    </Box>
+      <Typography color="text.secondary" fontSize={14} sx={{ mt: 2, textAlign: "center" }}>
+        Didn't get the verification email?{" "}
+        <MuiLink component={Link} to="/verify-email" underline="hover">
+          Resend it
+        </MuiLink>
+      </Typography>
+    </AuthLayout>
   );
 }
 

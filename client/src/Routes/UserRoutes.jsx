@@ -2,6 +2,8 @@ import { Navigate, Route } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import UserLayout from "../Components/User/UserLayout.jsx";
 import UnderConstruction from "../Pages/UnderConstruction/UnderConstruction.jsx";
+import Profile from "../Pages/Profile/Profile.jsx";
+import ChangePassword from "../Pages/ChangePassword/ChangePassword.jsx";
 
 export const userRoutes = (
   <Route element={<ProtectedRoute roles={["user"]} />}>
@@ -13,8 +15,8 @@ export const userRoutes = (
       <Route path="requests/new" element={<UnderConstruction title="New Request" />} />
       <Route path="requests/:id" element={<UnderConstruction title="Request Details" />} />
       <Route path="feedback" element={<UnderConstruction title="My Feedback" />} />
-      <Route path="profile" element={<UnderConstruction title="Profile" />} />
-      <Route path="change-password" element={<UnderConstruction title="Change Password" />} />
+      <Route path="profile" element={<Profile />} />
+      <Route path="change-password" element={<ChangePassword />} />
     </Route>
   </Route>
 );
