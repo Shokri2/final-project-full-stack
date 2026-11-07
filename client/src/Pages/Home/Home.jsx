@@ -51,7 +51,6 @@ function Home() {
         overflow: "hidden",
       }}
     >
-      {/* Hero Section */}
       <Box
         sx={{
           position: "relative",
@@ -82,7 +81,6 @@ function Home() {
               textShadow: "0 2px 10px rgba(0,0,0,0.55)",
             }}
           >
-            
 
             <Typography
               component="h1"
@@ -128,8 +126,7 @@ function Home() {
             <Stack
               direction={{ xs: "column", sm: "row" }}
               spacing={2}
-              alignItems={{ xs: "stretch", sm: "center" }}
-              sx={{ maxWidth: { xs: 320, sm: "none" } }}
+              sx={{ alignItems: { xs: "stretch", sm: "center" }, maxWidth: { xs: 320, sm: "none" } }}
             >
               <Button
                 variant="contained"

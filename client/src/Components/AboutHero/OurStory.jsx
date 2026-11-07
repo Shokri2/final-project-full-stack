@@ -12,7 +12,6 @@ export default function OurStory() {
       }}
     >
       <Container maxWidth="xl">
-        {/* Heading */}
         <Box
           sx={{
             textAlign: "center",

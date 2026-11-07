@@ -106,7 +106,7 @@ function Register() {
       }}
     >
       <Container maxWidth="sm">
-        <Box textAlign="center" sx={{ mb: 3 }}>
+        <Box sx={{ textAlign: "center", mb: 3 }}>
           <SpaOutlinedIcon sx={{ fontSize: 46, color: "#246B3D" }} />
 
           <Typography variant="h4" fontWeight={800} color="#183D2A">
@@ -225,7 +225,7 @@ function Register() {
             </Stack>
           </Box>
 
-          <Typography textAlign="center" sx={{ mt: 3 }} color="text.secondary">
+          <Typography sx={{ textAlign: "center", mt: 3 }} color="text.secondary">
             Already have an account?{" "}
             <Link
               to="/login"
@@ -239,7 +239,7 @@ function Register() {
             </Link>
           </Typography>
 
-          <Typography textAlign="center" sx={{ mt: 2 }}>
+          <Typography sx={{ textAlign: "center", mt: 2 }}>
             <Link
               to="/"
               style={{

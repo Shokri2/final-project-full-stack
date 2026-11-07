@@ -46,7 +46,7 @@ function Login() {
       }}
     >
       <Container maxWidth="sm">
-        <Box textAlign="center" sx={{ mb: 3 }}>
+        <Box sx={{ textAlign: "center", mb: 3 }}>
           <SpaOutlinedIcon sx={{ fontSize: 48, color: "#246B3D" }} />
 
           <Typography variant="h4" fontWeight={800} color="#183D2A">
@@ -125,7 +125,7 @@ function Login() {
             </Stack>
           </Box>
 
-          <Typography textAlign="center" sx={{ mt: 3 }} color="text.secondary">
+          <Typography sx={{ textAlign: "center", mt: 3 }} color="text.secondary">
             Don't have an account?{" "}
             <Link
               to="/register"

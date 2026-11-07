@@ -46,7 +46,7 @@ function Services() {
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#F7FAF5", py: 8 }}>
       <Container maxWidth="lg">
-        <Box textAlign="center" sx={{ mb: 6 }}>
+        <Box sx={{ textAlign: "center", mb: 6 }}>
           <Typography
             variant="overline"
             sx={{ color: "#388E3C", fontWeight: 800, letterSpacing: 2 }}
@@ -115,7 +115,7 @@ function Services() {
           ))}
         </Grid>
 
-        <Box textAlign="center" sx={{ mt: 6 }}>
+        <Box sx={{ textAlign: "center", mt: 6 }}>
           <Typography variant="h5" fontWeight={700} sx={{ mb: 2 }}>
             Ready to get started?
           </Typography>

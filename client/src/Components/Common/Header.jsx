@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   AppBar,
   Toolbar,
@@ -6,26 +7,41 @@ import {
   Button,
   Container,
   Stack,
+  IconButton,
+  Drawer,
+  List,
+  ListItemButton,
+  ListItemText,
+  Divider,
 } from "@mui/material";
-
 import { NavLink, Link } from "react-router-dom";
 import ArrowOutwardIcon from "@mui/icons-material/ArrowOutward";
+import MenuIcon from "@mui/icons-material/Menu";
 import { useAuth } from "../../Hooks/useAuth";
+import { getRoleHome } from "../../utils/roles";
 
 const pages = [
   { title: "Home", path: "/" },
   { title: "About", path: "/about" },
-  { title: "Dashboard", path: "/services" },
-
   { title: "Crop Guide", path: "/crop-guide" },
+  { title: "Reviews", path: "/feedback" },
+  { title: "Contact", path: "/contact" },
 ];
+
+const lightButton = {
+  color: "#fff",
+  textTransform: "none",
+  fontWeight: 700,
+  "&:hover": {
+    color: "#D9F36A",
+  },
+};
 
 function Header() {
   const { currentUser, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-  };
+  const closeMenu = () => setMenuOpen(false);
 
   return (
     <AppBar
@@ -51,7 +67,6 @@ function Header() {
             gap: 2,
           }}
         >
-          {/* Logo */}
           <Box
             component={Link}
             to="/"
@@ -69,8 +84,8 @@ function Header() {
               src="/images/logo.png"
               alt="Al-Hasad Gate Logo"
               sx={{
-                width: 60,
-                height: 60,
+                width: { xs: 48, sm: 60 },
+                height: { xs: 48, sm: 60 },
                 objectFit: "cover",
                 borderRadius: "50%",
                 flexShrink: 0,
@@ -78,36 +93,20 @@ function Header() {
             />
 
             <Box>
-              <Typography
-                sx={{
-                  fontWeight: 900,
-                  fontSize: 17,
-                  letterSpacing: 1.2,
-                  lineHeight: 1.2,
-                }}
-              >
+              <Typography sx={{ fontWeight: 900, fontSize: 17, letterSpacing: 1.2, lineHeight: 1.2 }}>
                 AL-HASAD
               </Typography>
-
-              <Typography
-                sx={{
-                  color: "#D9F36A",
-                  fontSize: 11,
-                  fontWeight: 800,
-                  letterSpacing: 4,
-                  mt: 0.4,
-                }}
-              >
+              <Typography sx={{ color: "#D9F36A", fontSize: 11, fontWeight: 800, letterSpacing: 4, mt: 0.4 }}>
                 GATE
               </Typography>
             </Box>
           </Box>
 
-          {/* Navigation Links */}
           <Stack
             direction="row"
             spacing={0.5}
             sx={{
+              display: { xs: "none", lg: "flex" },
               p: 0.7,
               borderRadius: 50,
               bgcolor: "rgba(255,255,255,0.10)",
@@ -119,6 +118,7 @@ function Header() {
                 key={page.path}
                 component={NavLink}
                 to={page.path}
+                end
                 sx={{
                   color: "#E8ECE7",
                   textTransform: "none",
@@ -143,39 +143,21 @@ function Header() {
             ))}
           </Stack>
 
-          {/* Authentication Buttons */}
-          <Stack direction="row" spacing={1.5} alignItems="center">
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", display: { xs: "none", lg: "flex" } }}>
             {currentUser ? (
-              <Button
-                onClick={handleLogout}
-                sx={{
-                  color: "#fff",
-                  textTransform: "none",
-                  fontWeight: 700,
-                  "&:hover": {
-                    color: "#D9F36A",
-                  },
-                }}
-              >
-                Logout
-              </Button>
+              <>
+                <Button component={Link} to={getRoleHome(currentUser)} sx={lightButton}>
+                  Dashboard
+                </Button>
+                <Button onClick={logout} sx={lightButton}>
+                  Logout
+                </Button>
+              </>
             ) : (
               <>
-                <Button
-                  component={Link}
-                  to="/login"
-                  sx={{
-                    color: "#fff",
-                    textTransform: "none",
-                    fontWeight: 700,
-                    "&:hover": {
-                      color: "#D9F36A",
-                    },
-                  }}
-                >
+                <Button component={Link} to="/login" sx={lightButton}>
                   Login
                 </Button>
-
                 <Button
                   component={Link}
                   to="/register"
@@ -202,8 +184,55 @@ function Header() {
               </>
             )}
           </Stack>
+
+          <IconButton
+            onClick={() => setMenuOpen(true)}
+            sx={{ display: { xs: "inline-flex", lg: "none" }, color: "#fff" }}
+            aria-label="Open menu"
+          >
+            <MenuIcon />
+          </IconButton>
         </Toolbar>
       </Container>
+
+      <Drawer anchor="right" open={menuOpen} onClose={closeMenu}>
+        <Box sx={{ width: 270 }} role="navigation" aria-label="Main navigation">
+          <List>
+            {pages.map((page) => (
+              <ListItemButton key={page.path} component={NavLink} to={page.path} end onClick={closeMenu}>
+                <ListItemText primary={page.title} />
+              </ListItemButton>
+            ))}
+          </List>
+          <Divider />
+          <List>
+            {currentUser ? (
+              <>
+                <ListItemButton component={Link} to={getRoleHome(currentUser)} onClick={closeMenu}>
+                  <ListItemText primary="Dashboard" />
+                </ListItemButton>
+                <ListItemButton
+                  onClick={() => {
+                    closeMenu();
+                    logout();
+                  }}
+                >
+                  <ListItemText primary="Logout" />
+                </ListItemButton>
+              </>
+            ) : (
+              <>
+                <ListItemButton component={Link} to="/login" onClick={closeMenu}>
+                  <ListItemText primary="Login" />
+                </ListItemButton>
+                <ListItemButton component={Link} to="/register" onClick={closeMenu}>
+                  <ListItemText primary="Register" />
+                </ListItemButton>
+              </>
+            )}
+          </List>
+        </Box>
+      </Drawer>
     </AppBar>
   );
 }
