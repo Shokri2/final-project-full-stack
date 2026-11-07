@@ -1,14 +1,7 @@
-import { Box, Container, Stack, Typography } from "@mui/material";
-import SpaOutlinedIcon from "@mui/icons-material/SpaOutlined";
-import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
-import SupportAgentOutlinedIcon from "@mui/icons-material/SupportAgentOutlined";
+import { Box, Container, Typography } from "@mui/material";
+import { ThemeProvider } from "@mui/material/styles";
 import CropBrowser from "../../Components/Crops/CropBrowser";
-
-const highlights = [
-  { icon: <SpaOutlinedIcon />, label: "Expert crop profiles" },
-  { icon: <TimelineOutlinedIcon />, label: "Stage-by-stage guidance" },
-  { icon: <SupportAgentOutlinedIcon />, label: "Ask a certified agronomist" },
-];
+import { darkTheme } from "../../Context/theme";
 
 function CropGuide() {
   return (
@@ -52,31 +45,16 @@ function CropGuide() {
             Discover the right crops for your farm, explore their growing requirements, and follow every
             stage from planting to harvest.
           </Typography>
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={{ xs: 1.5, sm: 3 }}
-            sx={{ justifyContent: "center", alignItems: "center", mt: 4 }}
-          >
-            {highlights.map((item) => (
-              <Stack
-                key={item.label}
-                direction="row"
-                spacing={1}
-                sx={{ alignItems: "center", px: 2, py: 1, borderRadius: 10, bgcolor: "rgba(255,255,255,0.1)" }}
-              >
-                <Box sx={{ color: "#D9F36A", display: "flex" }}>{item.icon}</Box>
-                <Typography fontWeight={600} fontSize={14}>
-                  {item.label}
-                </Typography>
-              </Stack>
-            ))}
-          </Stack>
         </Container>
       </Box>
 
-      <Container maxWidth="lg" sx={{ py: { xs: 5, md: 7 } }}>
-        <CropBrowser detailsPath={(crop) => `/crops/${crop.id}`} />
-      </Container>
+      <ThemeProvider theme={darkTheme}>
+        <Box sx={{ background: "linear-gradient(180deg, #1B3321 0%, #12301F 100%)", color: "text.primary" }}>
+          <Container maxWidth="lg" sx={{ py: { xs: 5, md: 7 } }}>
+            <CropBrowser detailsPath={(crop) => `/crops/${crop.id}`} />
+          </Container>
+        </Box>
+      </ThemeProvider>
     </>
   );
 }

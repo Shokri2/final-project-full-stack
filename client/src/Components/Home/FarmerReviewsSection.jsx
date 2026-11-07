@@ -1,5 +1,4 @@
-import { Avatar, Box, Button, Chip, Container, Rating, Stack, Typography } from "@mui/material";
-import { Link } from "react-router-dom";
+import { Avatar, Box, Chip, Container, Rating, Stack, Typography } from "@mui/material";
 import FormatQuoteRoundedIcon from "@mui/icons-material/FormatQuoteRounded";
 import VerifiedOutlinedIcon from "@mui/icons-material/VerifiedOutlined";
 import { useFetch } from "../../Hooks/useFetch";
@@ -89,17 +88,6 @@ function FarmerReviewsSection() {
           ))}
         </Box>
 
-        <Box sx={{ textAlign: "center", mt: 6 }}>
-          <Button
-            component={Link}
-            to="/crop-guide"
-            variant="contained"
-            size="large"
-            sx={{ bgcolor: LIME, color: "#183D2A", fontWeight: 800, borderRadius: 50, px: 4, "&:hover": { bgcolor: "#E8FF91" } }}
-          >
-            See reviews in the crop guide
-          </Button>
-        </Box>
       </Container>
     </Box>
   );
