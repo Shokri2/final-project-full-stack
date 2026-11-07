@@ -57,10 +57,11 @@ export const useTableQuery = ({ sort = "created_at", order = "desc", limit = 10,
     },
     [query.sort, query.order, update],
   );
+  const setSortOrder = useCallback((field, direction) => update({ sort: field, order: direction }), [update]);
   const resetFilters = useCallback(
     () => update(Object.fromEntries(["search", ...filters].map((name) => [name, ""]))),
     [update, filters.join(",")],
   );
 
-  return { query, setPage, setLimit, setSearch, setFilter, setSort, resetFilters };
+  return { query, setPage, setLimit, setSearch, setFilter, setSort, setSortOrder, resetFilters };
 };
