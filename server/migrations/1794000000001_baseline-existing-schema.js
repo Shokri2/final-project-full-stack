@@ -1,13 +1,3 @@
-/**
- * BASELINE: the schema exactly as it was built in pgAdmin during the midterm.
- *
- * Every statement uses IF NOT EXISTS, so:
- *   - on the existing local database this migration changes nothing;
- *   - on a brand-new database (e.g. Neon in production) it recreates the same tables.
- * All improvements are made by the migrations that follow.
- *
- * @param {import('node-pg-migrate').MigrationBuilder} pgm
- */
 export const up = (pgm) => {
   pgm.sql(`
     CREATE TABLE IF NOT EXISTS users (
@@ -110,5 +100,4 @@ export const up = (pgm) => {
   `);
 };
 
-// The baseline is the starting point of the project; rolling it back is not supported.
 export const down = false;

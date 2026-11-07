@@ -1,6 +1,3 @@
-// Catalog seed data: categories, crops and growth stages.
-// Crops are keyed by `name` so other seed files can reference them.
-
 export const categories = [
   {
     name: "Fruiting Vegetables",

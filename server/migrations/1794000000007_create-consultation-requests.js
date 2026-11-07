@@ -1,18 +1,3 @@
-/**
- * The main business workflow: consultation requests.
- *
- *   pending ──(admin assigns)──> assigned ──(agronomist starts)──> in_progress
- *      │                            │                                  │
- *      │                            └──────────(reject)────────────────┤
- *      ├──(user cancels)──> cancelled                                  ├──> rejected
- *      └──(admin rejects)──> rejected                                  └──(agronomist answers)──> answered
- *                                                                                                   │
- *                                                                            (user/admin closes)──> closed
- *
- * Every transition is written to request_status_history in the same transaction.
- *
- * @param {import('node-pg-migrate').MigrationBuilder} pgm
- */
 export const up = (pgm) => {
   pgm.createTable("consultation_requests", {
     id: "id",
@@ -54,7 +39,6 @@ export const up = (pgm) => {
   pgm.addConstraint("consultation_requests", "requests_field_area_check", {
     check: "field_area_m2 IS NULL OR field_area_m2 > 0",
   });
-  // Database-level guarantees that back up the workflow rules in the API.
   pgm.addConstraint("consultation_requests", "requests_rejection_reason_check", {
     check: "status <> 'rejected' OR rejection_reason IS NOT NULL",
   });
@@ -85,7 +69,7 @@ export const up = (pgm) => {
       references: "consultation_requests",
       onDelete: "CASCADE",
     },
-    from_status: { type: "varchar(20)" }, // NULL for the initial "submitted" entry
+    from_status: { type: "varchar(20)" },
     to_status: { type: "varchar(20)", notNull: true },
     changed_by: { type: "integer", references: "users", onDelete: "SET NULL" },
     note: { type: "text" },
@@ -103,7 +87,7 @@ export const up = (pgm) => {
     },
     uploaded_by: { type: "integer", references: "users", onDelete: "SET NULL" },
     file_url: { type: "varchar(500)", notNull: true },
-    storage_key: { type: "varchar(255)" }, // e.g. Cloudinary public_id, used to delete the file
+    storage_key: { type: "varchar(255)" },
     original_name: { type: "varchar(255)", notNull: true },
     mime_type: { type: "varchar(50)", notNull: true },
     size_bytes: { type: "integer", notNull: true },
@@ -113,12 +97,11 @@ export const up = (pgm) => {
     check: "mime_type IN ('image/jpeg', 'image/png', 'image/webp')",
   });
   pgm.addConstraint("request_attachments", "attachments_size_check", {
-    check: "size_bytes > 0 AND size_bytes <= 5242880", // 5 MB
+    check: "size_bytes > 0 AND size_bytes <= 5242880",
   });
   pgm.createIndex("request_attachments", "request_id");
 };
 
-/** @param {import('node-pg-migrate').MigrationBuilder} pgm */
 export const down = (pgm) => {
   pgm.dropTable("request_attachments");
   pgm.dropTable("request_status_history");

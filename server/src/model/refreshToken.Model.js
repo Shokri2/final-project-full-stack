@@ -34,7 +34,8 @@ export const findRefreshTokenSession = async (refreshToken) => {
        r.expires_at,
        r.revoked_at,
        u.role,
-       u.status
+       u.is_active,
+       u.email_verified_at
      FROM refresh_token_sessions r
      JOIN users u ON u.id = r.user_id
      WHERE r.token_hash = $1
@@ -115,4 +116,22 @@ export const rotateRefreshTokenSession = async ({
   } finally {
     client.release();
   }
+};
+
+export const revokeAllUserRefreshTokenSessions = async (
+  userId,
+  exceptRefreshToken = null,
+) => {
+  const exceptHash = exceptRefreshToken
+    ? hashRefreshToken(exceptRefreshToken)
+    : null;
+
+  await pool.query(
+    `UPDATE refresh_token_sessions
+     SET revoked_at = CURRENT_TIMESTAMP
+     WHERE user_id = $1
+       AND revoked_at IS NULL
+       AND ($2::varchar IS NULL OR token_hash <> $2)`,
+    [userId, exceptHash],
+  );
 };

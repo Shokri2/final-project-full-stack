@@ -7,15 +7,16 @@ import {
   updateCategoryById,
 } from "../controller/categories.Controller.js";
 import { validate } from "../middleware/validate.Middleware.js";
-import { protect, authorizeRoles } from "../middleware/protect.Middleware.js";
+import { authenticate } from "../middleware/authenticate.Middleware.js";
+import { authorize } from "../middleware/authorize.Middleware.js";
 import { categorySchema } from "../validation/category.Validation.js";
 
 const router = express.Router();
 
 router.post(
   "/category",
-  protect,
-  authorizeRoles("admin"),
+  authenticate,
+  authorize("admin"),
   validate(categorySchema),
   createCategoriesController,
 );
@@ -25,15 +26,15 @@ router.get("/category", getCategoryByNameController);
 
 router.put(
   "/category/:id",
-  protect,
-  authorizeRoles("admin"),
+  authenticate,
+  authorize("admin"),
   updateCategoryById,
 );
 
 router.delete(
   "/category/:id",
-  protect,
-  authorizeRoles("admin"),
+  authenticate,
+  authorize("admin"),
   deleteCategoryById,
 );
 

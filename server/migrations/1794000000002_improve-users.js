@@ -1,21 +1,4 @@
-/**
- * Improves the users table for the final project.
- *
- *  - Roles become user / agronomist / admin (the old unused 'employee' role is mapped to agronomist).
- *  - The admin-approval `status` column is replaced by:
- *        email_verified_at -> set when the user clicks the verification link
- *        is_active         -> admin can deactivate an account instead of deleting it
- *    Existing rows keep the same login behaviour:
- *        approved -> verified + active   (could log in before, still can)
- *        pending  -> not verified        (could not log in before, still cannot until verified)
- *        rejected -> deactivated
- *  - "phoneNumber" -> phone (snake_case like every other column), name up to 100 chars,
- *    timestamps become timestamptz and are kept current by a trigger.
- *
- * @param {import('node-pg-migrate').MigrationBuilder} pgm
- */
 export const up = (pgm) => {
-  // Shared trigger function: every table with updated_at uses it.
   pgm.sql(`
     CREATE OR REPLACE FUNCTION set_updated_at()
     RETURNS TRIGGER AS $$
@@ -26,14 +9,12 @@ export const up = (pgm) => {
     $$ LANGUAGE plpgsql;
   `);
 
-  // ---- roles ----
   pgm.dropConstraint("users", "users_role_check");
   pgm.sql(`UPDATE users SET role = 'agronomist' WHERE role = 'employee';`);
   pgm.addConstraint("users", "users_role_check", {
     check: "role IN ('user', 'agronomist', 'admin')",
   });
 
-  // ---- status -> is_active + email_verified_at ----
   pgm.addColumns("users", {
     is_active: { type: "boolean", notNull: true, default: true },
     email_verified_at: { type: "timestamptz" },
@@ -46,7 +27,6 @@ export const up = (pgm) => {
   pgm.dropConstraint("users", "users_status_check");
   pgm.dropColumn("users", "status");
 
-  // ---- columns ----
   pgm.renameColumn("users", "phoneNumber", "phone");
   pgm.alterColumn("users", "name", { type: "varchar(100)" });
   pgm.sql(`UPDATE users SET email = LOWER(email) WHERE email <> LOWER(email);`);
@@ -54,7 +34,6 @@ export const up = (pgm) => {
     check: "email = LOWER(email)",
   });
 
-  // ---- timestamps ----
   pgm.sql(`
     UPDATE users SET created_at = NOW() WHERE created_at IS NULL;
     UPDATE users SET updated_at = NOW() WHERE updated_at IS NULL;
@@ -73,7 +52,6 @@ export const up = (pgm) => {
   pgm.createIndex("users", "created_at");
 };
 
-/** @param {import('node-pg-migrate').MigrationBuilder} pgm */
 export const down = (pgm) => {
   pgm.dropIndex("users", "created_at");
   pgm.dropIndex("users", "role");

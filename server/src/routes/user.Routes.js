@@ -5,24 +5,60 @@ import {
   deleteUser,
   updateUserController,
   updateUserStatusController,
+  changePasswordController,
 } from "../controller/user.Controller.js";
-
-import { protect, authorizeRoles } from "../middleware/protect.Middleware.js";
+import { authenticate } from "../middleware/authenticate.Middleware.js";
+import { authorize } from "../middleware/authorize.Middleware.js";
+import { validate } from "../middleware/validate.Middleware.js";
+import { sensitiveRateLimiter } from "../middleware/authRateLimit.Middleware.js";
+import { changePasswordSchema } from "../validation/auth.Validation.js";
+import {
+  updateUserSchema,
+  updateUserStatusSchema,
+  userIdParamSchema,
+} from "../validation/user.Validation.js";
 
 const router = express.Router();
 
-router.get("/Users", protect, authorizeRoles("admin"), getUsers);
+router.get("/Users", authenticate, authorize("admin"), getUsers);
 
-router.get("/getUser/:id", protect, getUser);
+router.get(
+  "/getUser/:id",
+  authenticate,
+  validate(userIdParamSchema, "params"),
+  getUser,
+);
 
-router.put("/updateUser/:id", protect, updateUserController);
+router.put(
+  "/updateUser/:id",
+  authenticate,
+  validate(userIdParamSchema, "params"),
+  validate(updateUserSchema),
+  updateUserController,
+);
 
-router.delete("/deleteUser/:id", protect, authorizeRoles("admin"), deleteUser);
+router.put(
+  "/changePassword",
+  authenticate,
+  sensitiveRateLimiter,
+  validate(changePasswordSchema),
+  changePasswordController,
+);
+
+router.delete(
+  "/deleteUser/:id",
+  authenticate,
+  authorize("admin"),
+  validate(userIdParamSchema, "params"),
+  deleteUser,
+);
 
 router.patch(
   "/updateStatus/:id/status",
-  protect,
-  authorizeRoles("admin"),
+  authenticate,
+  authorize("admin"),
+  validate(userIdParamSchema, "params"),
+  validate(updateUserStatusSchema),
   updateUserStatusController,
 );
 

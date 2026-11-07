@@ -7,7 +7,7 @@ import {
   updateCategory,
 } from "../model/categories.Model.js";
 
-export const createCategoriesController = async (req, res) => {
+export const createCategoriesController = async (req, res, next) => {
   try {
     const { name, description } = req.body;
     const created_by = req.user.id;
@@ -37,15 +37,11 @@ export const createCategoriesController = async (req, res) => {
       category: created,
     });
   } catch (error) {
-    console.error("CREATE CATEGORY ERROR:", error);
-
-    return res.status(500).json({
-      message: "Internal server error.",
-    });
+    return next(error);
   }
 };
 
-export const getAllCategoriesController = async (req, res) => {
+export const getAllCategoriesController = async (req, res, next) => {
   try {
     const categories = await getAllCategories();
 
@@ -57,15 +53,11 @@ export const getAllCategoriesController = async (req, res) => {
       categories,
     });
   } catch (error) {
-    console.error("GET CATEGORIES ERROR:", error);
-
-    return res.status(500).json({
-      message: "Internal server error.",
-    });
+    return next(error);
   }
 };
 
-export const getCategoryByNameController = async (req, res) => {
+export const getCategoryByNameController = async (req, res, next) => {
   try {
     const name =
       typeof req.query.name === "string"
@@ -96,15 +88,11 @@ export const getCategoryByNameController = async (req, res) => {
       categories,
     });
   } catch (error) {
-    console.error("GET CATEGORY BY NAME ERROR:", error);
-
-    return res.status(500).json({
-      message: "Internal server error.",
-    });
+    return next(error);
   }
 };
 
-export const deleteCategoryById = async (req, res) => {
+export const deleteCategoryById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -121,15 +109,11 @@ export const deleteCategoryById = async (req, res) => {
       category: deleted[0],
     });
   } catch (error) {
-    console.error("DELETE CATEGORY ERROR:", error);
-
-    return res.status(500).json({
-      message: "Internal server error.",
-    });
+    return next(error);
   }
 };
 
-export const updateCategoryById = async (req, res) => {
+export const updateCategoryById = async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
@@ -178,10 +162,6 @@ export const updateCategoryById = async (req, res) => {
       category: updated[0],
     });
   } catch (error) {
-    console.error("UPDATE CATEGORY ERROR:", error);
-
-    return res.status(500).json({
-      message: "Internal server error.",
-    });
+    return next(error);
   }
 };
