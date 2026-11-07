@@ -29,6 +29,19 @@ export const errorHandler = (error, req, res, next) => {
     });
   }
 
+  if (error.name === "MulterError") {
+    const uploadMessages = {
+      LIMIT_FILE_SIZE: "Each image must be 5 MB or smaller.",
+      LIMIT_FILE_COUNT: "You can upload up to 3 images.",
+      LIMIT_UNEXPECTED_FILE: "Images must be sent in the 'images' field (max 3).",
+    };
+
+    return res.status(400).json({
+      success: false,
+      message: uploadMessages[error.code] || "File upload failed.",
+    });
+  }
+
   if (error.type === "entity.parse.failed") {
     return res.status(400).json({
       success: false,
@@ -43,12 +56,14 @@ export const errorHandler = (error, req, res, next) => {
     });
   }
 
-  if (process.env.NODE_ENV !== "test") {
+  const status = error.status || 500;
+
+  if (status >= 500 && process.env.NODE_ENV !== "test") {
     console.error(`ERROR [${req.method} ${req.originalUrl}]:`, error);
   }
 
-  return res.status(error.status || 500).json({
+  return res.status(status).json({
     success: false,
-    message: error.status && error.status < 500 ? error.message : "Internal server error.",
+    message: status < 500 ? error.message : "Internal server error.",
   });
 };
