@@ -1,4 +1,4 @@
-# 🌱 AL-HASAD GATE
+# AL-HASAD GATE
 
 **A smart-agriculture platform that connects farmers with specialist agronomists.**
 
