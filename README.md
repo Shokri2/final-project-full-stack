@@ -7,6 +7,8 @@ Farmers browse a guide of crops (ideal conditions and every growth stage), and w
 **Live demo:** https://al-hasad-gate.onrender.com  
 _Hosted on Render's free tier, so the backend sleeps when idle: the first load can take up to a minute._
 
+![AL-HASAD GATE home page](docs/al-hasad-home.avif)
+
 ---
 
 ## Table of contents
