@@ -4,6 +4,9 @@
 
 Farmers browse a guide of crops (ideal conditions and every growth stage), and when something goes wrong they submit a consultation request with photos. The request is assigned to an agronomist who specialises in that crop's category, who answers it inside the platform. Every step is tracked, and farmers can review the advice they received.
 
+**Live demo:** https://al-hasad-gate.onrender.com  
+_Hosted on Render's free tier, so the backend sleeps when idle: the first load can take up to a minute._
+
 ---
 
 ## Table of contents
